@@ -35,4 +35,12 @@ impl Config {
         }
         config
     }
+    pub fn make_action(&self) {
+        if let Some(act) = &self.action {
+            match act {
+                Action::Init { name } => println!("Initialize project with name {name}"),
+                Action::HelloWorld => println!("Hello world from command"),
+            }
+        }
+    }
 }
