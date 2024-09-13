@@ -1,3 +1,6 @@
+use limp::flags::Config;
+
 fn main() {
-    println!("Hello, world!");
+    let args = std::env::args().skip(1).collect::<Vec<String>>();
+    let conf = Config::parse(&args);
 }
