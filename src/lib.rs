@@ -1,4 +1,5 @@
 pub mod crates;
+pub mod error;
 pub mod files;
 pub mod flags;
 pub mod toml;

@@ -1,3 +1,5 @@
+use crate::toml::{Dependency, Project};
+
 pub enum Action {
     Init { name: String },
     HelloWorld,
@@ -38,7 +40,16 @@ impl Config {
     pub fn make_action(&self) {
         if let Some(act) = &self.action {
             match act {
-                Action::Init { name } => println!("Initialize project with name {name}"),
+                Action::Init { name } => {
+                    println!("Initialize project with name {name}");
+                    let proj = Project {
+                        name: name.to_string(),
+                        version: "0.1.0".to_string(),
+                        edition: "2021".to_string(),
+                        dependencies: vec![Dependency::new("hello")],
+                    };
+                    proj.write().map_err(|e| eprintln!("{e}")).unwrap()
+                }
                 Action::HelloWorld => println!("Hello world from command"),
             }
         }
