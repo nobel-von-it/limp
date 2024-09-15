@@ -30,7 +30,6 @@ impl Config {
         let mut config = Config::default();
         let mut args = args.iter();
 
-        let _program = args.next().unwrap();
         if let Some(action) = args.next() {
             match action.as_str() {
                 "init" => {
@@ -115,10 +114,7 @@ impl Config {
             match act {
                 Action::Init { name, dependencies } => {
                     println!("Initialize project with name {}", &name);
-                    let jd = json::load().unwrap_or_else(|e| {
-                        eprintln!("ERROR: serde_json error: {e}");
-                        std::process::exit(1);
-                    });
+                    let jd = json::load();
                     if let Some(dependencies) = dependencies {
                         let proj = Project {
                             name: name.to_string(),
@@ -137,10 +133,7 @@ impl Config {
                     features,
                     path_to_snippet,
                 } => {
-                    let mut jd = json::load().unwrap_or_else(|e| {
-                        eprintln!("ERROR: serde_json error: {e}");
-                        exit(1);
-                    });
+                    let mut jd = json::load();
                     if let Some(d) = json::add_new(
                         &mut jd,
                         name,
@@ -152,10 +145,7 @@ impl Config {
                         println!("{d}")
                     }
 
-                    json::save(&jd).unwrap_or_else(|e| {
-                        eprintln!("ERROR: serde_json error: {e}");
-                        exit(1);
-                    });
+                    json::save(&jd);
                 }
                 Action::HelloWorld => println!("Hello world from command"),
             }
