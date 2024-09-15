@@ -1,4 +1,4 @@
-const CARGO_PATH: &str = "Test.toml";
+use crate::files::FileManager;
 
 pub struct Project {
     pub name: String,
@@ -21,11 +21,10 @@ impl Project {
     pub fn write(&self) -> std::io::Result<()> {
         use std::io::Write;
 
-        let mut file = std::fs::File::options()
-            .read(true)
-            .write(true)
-            .open(CARGO_PATH)
-            .unwrap_or_else(|_| std::fs::File::create(CARGO_PATH).unwrap());
+        FileManager::create_project(&self.name)?;
+
+        let cargo_path = format!("{}/Cargo.toml", &self.name);
+        let mut file = FileManager::copen(&cargo_path);
 
         writeln!(file, "[package]")?;
         writeln!(file, "name = \"{}\"", &self.name)?;

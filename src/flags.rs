@@ -115,17 +115,19 @@ impl Config {
                 Action::Init { name, dependencies } => {
                     println!("Initialize project with name {}", &name);
                     let jd = json::load();
-                    if let Some(dependencies) = dependencies {
-                        let proj = Project {
-                            name: name.to_string(),
-                            dependencies: dependencies
+                    let proj = Project {
+                        name: name.to_string(),
+                        dependencies: if let Some(dependencies) = dependencies {
+                            dependencies
                                 .iter()
                                 .map(|d| json::get_dependency(&jd, d).expect("TODO"))
-                                .collect(),
-                            ..Default::default()
-                        };
-                        proj.write().map_err(|e| eprintln!("{e}")).unwrap()
-                    }
+                                .collect()
+                        } else {
+                            vec![]
+                        },
+                        ..Default::default()
+                    };
+                    proj.write().map_err(|e| eprintln!("{e}")).unwrap()
                 }
                 Action::NewDependency {
                     name,

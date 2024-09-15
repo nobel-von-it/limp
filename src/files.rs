@@ -1,6 +1,5 @@
 use core::panic;
-
-use crate::error::IError;
+use std::io::Write;
 
 // pub fn create(name: &str, is_lib: bool, add_git: bool) -> Result<Paths, Error> {
 //     use super::{new_dir, new_file, read_write_file};
@@ -49,17 +48,29 @@ use crate::error::IError;
 pub struct FileManager;
 
 impl FileManager {
-    pub fn create_project(path: &str) -> Result<(), IError> {
-        let path = std::path::Path::new(path);
-        if path.exists() {
-            return Err(IError::CreateFilesError);
+    pub fn create_project(name: &str) -> std::io::Result<()> {
+        // path is a relative path or an absolute path
+        let src = format!("{}/src", name);
+        let main = format!("{}/main.rs", &src);
+        let cargo = format!("{}/Cargo.toml", name);
+
+        std::fs::create_dir_all(src)?;
+        std::fs::File::create(&main)?;
+        std::fs::File::create(&cargo)?;
+
+        if !std::process::Command::new("git")
+            .args(["init", name])
+            .spawn()?
+            .wait()?
+            .success()
+        {
+            eprintln!("ERROR: cannot create git repo in project {name}");
+            std::process::exit(1);
         }
-        std::fs::File::create(path).unwrap_or_else(|_| {
-            if let Some(parent) = path.parent() {
-                std::fs::create_dir_all(parent).unwrap();
-            }
-            std::fs::File::create(path).unwrap()
-        });
+        let gitignore = format!("{}/.gitignore", name);
+        let mut file = FileManager::copen(&gitignore);
+        file.write_all(b"/target")?;
+
         Ok(())
     }
     pub fn copen(path: &str) -> std::fs::File {
