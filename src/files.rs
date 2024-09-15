@@ -1,3 +1,5 @@
+use core::panic;
+
 use crate::error::IError;
 
 // pub fn create(name: &str, is_lib: bool, add_git: bool) -> Result<Paths, Error> {
@@ -59,5 +61,24 @@ impl FileManager {
             std::fs::File::create(path).unwrap()
         });
         Ok(())
+    }
+    pub fn copen(path: &str) -> std::fs::File {
+        let path = std::path::Path::new(path);
+        if path.exists() {
+            std::fs::File::options()
+                .read(true)
+                .write(true)
+                .open(path)
+                .unwrap()
+        } else {
+            std::fs::File::create(path).unwrap_or_else(|_| {
+                if let Some(parent) = path.parent() {
+                    std::fs::create_dir_all(parent).unwrap();
+                    std::fs::File::create(path).unwrap()
+                } else {
+                    panic!("Not reachable")
+                }
+            })
+        }
     }
 }

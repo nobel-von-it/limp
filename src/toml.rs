@@ -7,6 +7,16 @@ pub struct Project {
     // TODO: add optional fields
     pub dependencies: Vec<Dependency>,
 }
+impl Default for Project {
+    fn default() -> Self {
+        Self {
+            name: String::from("limp"),
+            version: String::from("0.1.0"),
+            edition: String::from("2021"),
+            dependencies: Vec::new(),
+        }
+    }
+}
 impl Project {
     pub fn write(&self) -> std::io::Result<()> {
         use std::io::Write;
@@ -33,9 +43,9 @@ impl Project {
 }
 
 pub struct Dependency {
-    name: String,
-    version: String,
-    features: Option<Vec<String>>,
+    pub name: String,
+    pub version: String,
+    pub features: Option<Vec<String>>,
 }
 impl Dependency {
     pub fn new(name: &str) -> Dependency {
