@@ -19,6 +19,7 @@ pub fn load() -> JsonDependencies {
 
 pub fn save(jd: &JsonDependencies) {
     let file = FileManager::copen(CONFIG_PATH);
+    file.set_len(0).unwrap();
     serde_json::to_writer(file, jd).unwrap_or_else(|e| {
         eprintln!("ERROR: serde_json error: {e}");
         std::process::exit(1);
@@ -48,6 +49,10 @@ pub fn add_new(
     features: Option<Vec<String>>,
     path_to_snippet: Option<String>,
 ) -> Option<Dependency> {
+    if jd.iter().any(|(n, _)| n == name) {
+        // TODO: rewrite crate question
+        return None;
+    }
     if let Some(d) = jd.insert(
         name.to_string(),
         DependencyInfo {

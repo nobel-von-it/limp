@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::toml::Dependency;
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FullCrateInfo {
     #[serde(rename = "crate")]
@@ -53,6 +55,7 @@ impl Version {
     }
 }
 
+#[derive(Debug)]
 pub struct CrateValidator {
     pub name: String,
     pub versions: Vec<String>,
@@ -80,5 +83,29 @@ impl CrateValidator {
     }
     pub fn validate(name: &str) -> bool {
         CrateValidator::get_last_from_cratesio(name).is_some()
+    }
+    pub fn dependency_validate(d: &Dependency) -> bool {
+        if let Some(cv) = CrateValidator::get_last_from_cratesio(&d.name) {
+            println!("{:#?}", &cv);
+            println!("{:#?}", d);
+            if cv.name == d.name && cv.versions.contains(&d.version) {
+                if d.features.is_none() {
+                    return true;
+                } else if cv.features.is_some() && d.features.is_some() {
+                    let cvf = cv.features.clone().unwrap();
+                    let df = d.features.clone().unwrap();
+                    if df
+                        .iter()
+                        .filter(|f| cvf.contains(f))
+                        .collect::<Vec<_>>()
+                        .len()
+                        == df.len()
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
     }
 }

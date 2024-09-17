@@ -1,6 +1,7 @@
 use std::process::exit;
 
 use crate::{
+    crates::CrateValidator,
     eusage,
     json::{self, JsonDependencies},
     toml::{Dependency, Project},
@@ -143,6 +144,10 @@ impl Config {
                         features.clone(),
                         path_to_snippet.clone(),
                     ) {
+                        if !CrateValidator::dependency_validate(&d) {
+                            eprintln!("crate {} doesnt exist", &name);
+                            exit(1);
+                        }
                         println!("Add new dependency into json database");
                         println!("{d}")
                     }
