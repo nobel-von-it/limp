@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{files::FileManager, toml::Dependency};
+use crate::{crates::CrateValidator, files::FileManager, toml::Dependency};
 
 const CONFIG_PATH: &str = "/home/nerd/.config/limp/dependencies.json";
 
@@ -49,7 +49,7 @@ pub fn add_new(
     features: Option<Vec<String>>,
     path_to_snippet: Option<String>,
 ) -> Option<Dependency> {
-    if jd.iter().any(|(n, _)| n == name) {
+    if jd.iter().any(|(n, _)| n == name) || !CrateValidator::validate(name) {
         // TODO: rewrite crate question
         return None;
     }
