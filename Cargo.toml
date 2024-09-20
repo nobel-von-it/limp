@@ -1,5 +1,9 @@
 [package]
 name = "limp"
+description = "effortless project initialization and dependency management"
+license = "MIT"
+authors = ["Nobel von it"]
+repository = "https://github.com/nobel-von-it/limp"
 version = "0.1.0"
 edition = "2021"
 
