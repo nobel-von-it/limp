@@ -45,6 +45,11 @@ use std::io::Write;
 //     })
 // }
 
+const MAIN_SNIP: &str = r#"
+fn main() {
+    println!("Hello, limp!");
+}"#;
+
 pub struct FileManager;
 
 impl FileManager {
@@ -55,7 +60,8 @@ impl FileManager {
         let cargo = format!("{}/Cargo.toml", name);
 
         std::fs::create_dir_all(src)?;
-        std::fs::File::create(&main)?;
+        let mut main = std::fs::File::create(&main)?;
+        main.write_all(MAIN_SNIP.as_bytes())?;
         std::fs::File::create(&cargo)?;
 
         if !std::process::Command::new("git")
