@@ -144,15 +144,10 @@ impl Config {
                         features.clone(),
                         path_to_snippet.clone(),
                     ) {
-                        if !CrateValidator::dependency_validate(&d) {
-                            eprintln!("crate {} doesnt exist", &name);
-                            exit(1);
-                        }
                         println!("Add new dependency into json database");
-                        println!("{d}")
+                        println!("{d}");
+                        json::save(&jd);
                     }
-
-                    json::save(&jd);
                 }
                 Action::HelloWorld => println!("Hello world from command"),
             }
