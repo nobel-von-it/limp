@@ -1,13 +1,6 @@
 use std::process::exit;
 
-use crate::{
-    actions::Action,
-    crates::CrateValidator,
-    eusage,
-    json::{self, JsonDependencies},
-    toml::{Dependency, Project},
-    usage,
-};
+use crate::{actions::Action, eusage};
 
 #[derive(Default)]
 pub struct Config {
@@ -89,7 +82,10 @@ impl Config {
                 "hello" | "helloworld" | "hw" => {
                     config.action = Some(Action::HelloWorld);
                 }
-                _ => {}
+                _ => {
+                    eusage();
+                    exit(1);
+                }
             }
         }
         config

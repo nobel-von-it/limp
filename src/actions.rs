@@ -1,5 +1,5 @@
 use crate::{
-    crates::{CrateValidator, FullCrateInfo},
+    crates::FullCrateInfo,
     json::{self, DependencyInfo},
     toml::{Dependency, Project},
 };
@@ -36,7 +36,7 @@ impl Action {
                     Some(d) => resdeps.push(d),
                     None => {
                         // get default last version from cratesio if not exist
-                        if let Some(new_dep) = CrateValidator::get_last_from_cratesio(d) {
+                        if let Some(new_dep) = FullCrateInfo::get_from_cratesio(d) {
                             resdeps.push(Dependency::from(new_dep));
                         }
                     }

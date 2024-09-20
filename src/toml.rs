@@ -1,4 +1,4 @@
-use crate::{crates::CrateValidator, files::FileManager};
+use crate::{crates::FullCrateInfo, files::FileManager};
 
 pub struct Project {
     pub name: String,
@@ -63,15 +63,25 @@ impl Dependency {
         }
     }
 }
-impl From<CrateValidator> for Dependency {
-    fn from(value: CrateValidator) -> Self {
+impl From<FullCrateInfo> for Dependency {
+    fn from(value: FullCrateInfo) -> Self {
+        let latest_version = &value.get_version(0).unwrap();
         Dependency {
-            name: value.name,
-            version: value.versions[0].clone(),
-            features: None,
+            name: value.crate_info.name,
+            version: latest_version.num.clone(),
+            features: latest_version.get_features(),
         }
     }
 }
+// impl From<CrateValidator> for Dependency {
+//     fn from(value: CrateValidator) -> Self {
+//         Dependency {
+//             name: value.name,
+//             version: value.versions[0].clone(),
+//             features: None,
+//         }
+//     }
+// }
 impl std::fmt::Display for Dependency {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         // name = version

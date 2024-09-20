@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{crates::CrateValidator, files::FileManager, toml::Dependency};
+use crate::{files::FileManager, toml::Dependency};
 
 const CONFIG_PATH: &str = "/home/nerd/.config/limp/dependencies.json";
 
