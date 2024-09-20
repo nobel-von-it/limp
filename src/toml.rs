@@ -1,4 +1,4 @@
-use crate::files::FileManager;
+use crate::{crates::CrateValidator, files::FileManager};
 
 pub struct Project {
     pub name: String,
@@ -39,9 +39,16 @@ impl Project {
         }
         Ok(())
     }
+    pub fn new(name: &str, deps: Vec<Dependency>) -> Self {
+        Project {
+            name: name.to_string(),
+            dependencies: deps,
+            ..Default::default()
+        }
+    }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Dependency {
     pub name: String,
     pub version: String,
@@ -53,6 +60,15 @@ impl Dependency {
             name: name.to_string(),
             version: "2039482398408".to_string(),
             features: Some(vec!["hellol".to_string()]),
+        }
+    }
+}
+impl From<CrateValidator> for Dependency {
+    fn from(value: CrateValidator) -> Self {
+        Dependency {
+            name: value.name,
+            version: value.versions[0].clone(),
+            features: None,
         }
     }
 }

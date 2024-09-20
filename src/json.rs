@@ -4,7 +4,7 @@ use crate::{crates::CrateValidator, files::FileManager, toml::Dependency};
 
 const CONFIG_PATH: &str = "/home/nerd/.config/limp/dependencies.json";
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Default, Clone, Debug)]
 pub struct DependencyInfo {
     pub version: String,
     pub features: Option<Vec<String>>,
@@ -42,31 +42,9 @@ pub fn get_path(jd: &JsonDependencies, name: &str) -> Option<String> {
     }
 }
 
-pub fn add_new(
-    jd: &mut JsonDependencies,
-    name: &str,
-    version: &str,
-    features: Option<Vec<String>>,
-    path_to_snippet: Option<String>,
-) -> Option<Dependency> {
-    if jd.iter().any(|(n, _)| n == name) || !CrateValidator::validate(name) {
-        // TODO: rewrite crate question
-        return None;
-    }
-    if let Some(d) = jd.insert(
-        name.to_string(),
-        DependencyInfo {
-            version: version.to_string(),
-            features,
-            path_to_snippet,
-        },
-    ) {
-        Some(Dependency {
-            name: name.to_string(),
-            version: d.version.clone(),
-            features: d.features.clone(),
-        })
-    } else {
-        None
+pub fn print(jd: &JsonDependencies, name: &str) {
+    if let Some(dep) = get_dependency(jd, name) {
+        println!("{} -> '{}'", &dep.name, &dep.version);
+        println!("      '{:?}'", &dep.features.unwrap_or_default())
     }
 }

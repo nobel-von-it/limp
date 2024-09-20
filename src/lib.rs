@@ -1,3 +1,4 @@
+pub mod actions;
 pub mod crates;
 pub mod error;
 pub mod files;

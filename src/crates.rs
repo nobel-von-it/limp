@@ -5,10 +5,23 @@ use crate::toml::Dependency;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FullCrateInfo {
     #[serde(rename = "crate")]
-    crate_info: Crate,
-    pub versions: Vec<serde_json::Value>,
+    pub crate_info: Crate,
+    versions: Vec<serde_json::Value>,
 }
 impl FullCrateInfo {
+    pub fn get_from_cratesio(name: &str) -> Option<Self> {
+        let url = format!("https://crates.io/api/v1/crates/{}", name);
+        if let Ok(res) = reqwest::blocking::Client::new()
+            .get(url)
+            .header("User-Agent", "limp/0.1.0")
+            .send()
+        {
+            if let Ok(text) = res.json::<FullCrateInfo>() {
+                return Some(text);
+            }
+        }
+        None
+    }
     pub fn get_all_versions(&self) -> Vec<Version> {
         let mut vs = vec![];
         for v in self.versions.iter() {

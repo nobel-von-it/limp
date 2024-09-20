@@ -1,26 +1,13 @@
 use std::process::exit;
 
 use crate::{
+    actions::Action,
     crates::CrateValidator,
     eusage,
     json::{self, JsonDependencies},
     toml::{Dependency, Project},
     usage,
 };
-
-pub enum Action {
-    Init {
-        name: String,
-        dependencies: Option<Vec<String>>,
-    },
-    NewDependency {
-        name: String,
-        version: String,
-        features: Option<Vec<String>>,
-        path_to_snippet: Option<String>,
-    },
-    HelloWorld,
-}
 
 #[derive(Default)]
 pub struct Config {
@@ -65,17 +52,14 @@ impl Config {
                         })
                         .to_string();
 
-                    let mut version = String::new();
+                    let mut version = None;
                     let mut path_to_snippet = None;
                     let mut features = None;
                     while let Some(arg) = args.next() {
                         match arg.as_str() {
                             "-v" | "--version" => {
                                 if let Some(ver) = args.next() {
-                                    version = ver.to_string();
-                                } else {
-                                    eusage();
-                                    exit(1);
+                                    version = Some(ver.to_string());
                                 }
                             }
                             "-p" | "--path" => {
@@ -113,42 +97,13 @@ impl Config {
     pub fn make_action(&self) {
         if let Some(act) = &self.action {
             match act {
-                Action::Init { name, dependencies } => {
-                    println!("Initialize project with name {}", &name);
-                    let jd = json::load();
-                    let proj = Project {
-                        name: name.to_string(),
-                        dependencies: if let Some(dependencies) = dependencies {
-                            dependencies
-                                .iter()
-                                .map(|d| json::get_dependency(&jd, d).expect("TODO"))
-                                .collect()
-                        } else {
-                            vec![]
-                        },
-                        ..Default::default()
-                    };
-                    proj.write().map_err(|e| eprintln!("{e}")).unwrap()
-                }
+                Action::Init { name, dependencies } => Action::init(name, dependencies),
                 Action::NewDependency {
                     name,
                     version,
                     features,
                     path_to_snippet,
-                } => {
-                    let mut jd = json::load();
-                    if let Some(d) = json::add_new(
-                        &mut jd,
-                        name,
-                        version,
-                        features.clone(),
-                        path_to_snippet.clone(),
-                    ) {
-                        println!("Add new dependency into json database");
-                        println!("{d}");
-                        json::save(&jd);
-                    }
-                }
+                } => Action::add_new(name, version, features, path_to_snippet),
                 Action::HelloWorld => println!("Hello world from command"),
             }
         }
