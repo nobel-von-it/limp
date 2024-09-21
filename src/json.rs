@@ -34,17 +34,14 @@ pub fn get_dependency(jd: &JsonDependencies, name: &str) -> Option<Dependency> {
     })
 }
 
+pub fn get_dependency_info(jd: &JsonDependencies, name: &str) -> Option<DependencyInfo> {
+    jd.get(name).cloned()
+}
+
 pub fn get_path(jd: &JsonDependencies, name: &str) -> Option<String> {
     if let Some(dep) = jd.get(name) {
         dep.path_to_snippet.as_ref().map(|p| p.to_string())
     } else {
         None
-    }
-}
-
-pub fn print(jd: &JsonDependencies, name: &str) {
-    if let Some(dep) = get_dependency(jd, name) {
-        println!("{} -> '{}'", &dep.name, &dep.version);
-        println!("      '{:?}'", &dep.features.unwrap_or_default())
     }
 }

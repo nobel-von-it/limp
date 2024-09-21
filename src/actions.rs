@@ -16,6 +16,7 @@ pub enum Action {
         path_to_snippet: Option<String>,
     },
     List,
+    Help,
 }
 impl Action {
     pub fn init(name: &str, mbdeps: &Option<Vec<String>>) {
@@ -64,10 +65,15 @@ impl Action {
             // get info about crate from cratesio
             if let Some(crate_) = FullCrateInfo::get_from_cratesio(name) {
                 // initialize base dependency info
-                let mut dep_info = DependencyInfo {
-                    path_to_snippet: path_to_snippet.clone(),
-                    ..Default::default()
-                };
+                let mut dep_info = DependencyInfo::default();
+
+                if let Some(path_to_snippet) = path_to_snippet {
+                    if std::path::Path::new(path_to_snippet).exists() {
+                        dep_info.path_to_snippet = Some(path_to_snippet.to_string());
+                    } else {
+                        println!("{path_to_snippet} not exist");
+                    }
+                }
                 // check version provided and version is valid else get latest version from cratesio
                 let res_version = if let Some(ver) = version {
                     if let Some(version) = crate_.get_all_versions().iter().find(|v| &v.num == ver)

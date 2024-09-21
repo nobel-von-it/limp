@@ -80,6 +80,7 @@ impl Config {
                     })
                 }
                 "list" | "all" | "show-all" => config.action = Some(Action::List),
+                "h" | "-h" | "help" | "--help" => config.action = Some(Action::Help),
                 _ => {
                     eusage();
                     exit(1);
@@ -99,6 +100,7 @@ impl Config {
                     path_to_snippet,
                 } => Action::add_new(name, version, features, path_to_snippet),
                 Action::List => Action::list(),
+                Action::Help => eusage(),
             }
         }
     }

@@ -1,4 +1,4 @@
-use crate::{crates::FullCrateInfo, files::FileManager};
+use crate::{crates::FullCrateInfo, files::FileManager, json::DependencyInfo};
 
 pub struct Project {
     pub name: String,
@@ -60,6 +60,13 @@ impl Dependency {
             name: name.to_string(),
             version: "2039482398408".to_string(),
             features: Some(vec!["hellol".to_string()]),
+        }
+    }
+    pub fn from_jd(name: &str, di: &DependencyInfo) -> Self {
+        Dependency {
+            name: name.to_string(),
+            version: di.version.clone(),
+            features: di.features.clone(),
         }
     }
 }
