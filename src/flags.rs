@@ -79,9 +79,7 @@ impl Config {
                         path_to_snippet,
                     })
                 }
-                "hello" | "helloworld" | "hw" => {
-                    config.action = Some(Action::HelloWorld);
-                }
+                "list" | "all" | "show-all" => config.action = Some(Action::List),
                 _ => {
                     eusage();
                     exit(1);
@@ -100,7 +98,7 @@ impl Config {
                     features,
                     path_to_snippet,
                 } => Action::add_new(name, version, features, path_to_snippet),
-                Action::HelloWorld => println!("Hello world from command"),
+                Action::List => Action::list(),
             }
         }
     }

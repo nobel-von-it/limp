@@ -15,7 +15,7 @@ pub enum Action {
         features: Option<Vec<String>>,
         path_to_snippet: Option<String>,
     },
-    HelloWorld,
+    List,
 }
 impl Action {
     pub fn init(name: &str, mbdeps: &Option<Vec<String>>) {
@@ -129,5 +129,18 @@ impl Action {
         // } else {
         //     None
         // }
+    }
+    pub fn list() {
+        let jd = json::load();
+        for (k, v) in jd.iter() {
+            println!("{k} ->");
+            println!("  v: {ver}", ver = &v.version);
+            if let Some(features) = &v.features {
+                println!("  f: {fs}", fs = &features.join(", "))
+            }
+            if let Some(path) = &v.path_to_snippet {
+                println!("  p: {path}")
+            }
+        }
     }
 }
