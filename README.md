@@ -40,7 +40,7 @@ LIMP provides three main commands:
 limp init my-project -d serde tokio
 ```
     my-project: The name of the project.
-    -d or --deps: A list of dependencies to include.
+    -d or --deps: A list of dependencies to include (use at the end).
 
 ###   Add a New Dependency:
 
@@ -49,7 +49,7 @@ limp new/add serde -v 1.0.123 -p path/to/snippet.rs -f derive serde_derive
 ```
     serde: The name of the dependency.
     -v or --version: The version of the dependency (optional, by default use latest).
-    -f or --features: A list of features to enable (optional).
+    -f or --features: A list of features to enable (optional, use at the end).
     -p or --path: The path to a code snippet related to the dependency (optional).
 
 ###   Hello World (just test function):
