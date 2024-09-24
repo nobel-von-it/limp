@@ -109,7 +109,6 @@ impl Action {
 
                 // insert can't return some
                 let _ = jd.insert(name.to_string(), dep_info);
-                json::print(&jd, name);
                 json::save(&jd);
             } else {
                 eprintln!("crate {name} not in cratesio");
