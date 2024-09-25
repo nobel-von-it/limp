@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{files::FileManager, toml::Dependency};
 
-const CONFIG_PATH: &str = "/home/nerd/.config/limp/dependencies.json";
+// const CONFIG_PATH: &str = "/home/nerd/.config/limp/dependencies.json";
 
 #[derive(Serialize, Deserialize, Default, Clone, Debug)]
 pub struct DependencyInfo {
@@ -13,17 +13,23 @@ pub struct DependencyInfo {
 pub type JsonDependencies = std::collections::HashMap<String, DependencyInfo>;
 
 pub fn load() -> JsonDependencies {
-    let file = FileManager::copen(CONFIG_PATH);
-    serde_json::from_reader(file).unwrap_or(JsonDependencies::new())
+    if let Some(config) = FileManager::config_path() {
+        let file = FileManager::copen(&config);
+        serde_json::from_reader(file).unwrap_or(JsonDependencies::new())
+    } else {
+        JsonDependencies::new()
+    }
 }
 
 pub fn save(jd: &JsonDependencies) {
-    let file = FileManager::copen(CONFIG_PATH);
-    file.set_len(0).unwrap();
-    serde_json::to_writer(file, jd).unwrap_or_else(|e| {
-        eprintln!("ERROR: serde_json error: {e}");
-        std::process::exit(1);
-    })
+    if let Some(config) = FileManager::config_path() {
+        let file = FileManager::copen(&config);
+        file.set_len(0).unwrap();
+        serde_json::to_writer(file, jd).unwrap_or_else(|e| {
+            eprintln!("ERROR: serde_json error: {e}");
+            std::process::exit(1);
+        })
+    }
 }
 
 pub fn get_dependency(jd: &JsonDependencies, name: &str) -> Option<Dependency> {

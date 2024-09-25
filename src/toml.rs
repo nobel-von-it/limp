@@ -21,9 +21,13 @@ impl Project {
     pub fn write(&self) -> std::io::Result<()> {
         use std::io::Write;
 
+        let spliter = match std::env::consts::OS {
+            "windows" => "\\",
+            _ => "/",
+        };
         FileManager::create_project(&self.name)?;
 
-        let cargo_path = format!("{}/Cargo.toml", &self.name);
+        let cargo_path = format!("{}{spliter}Cargo.toml", &self.name);
         let mut file = FileManager::copen(&cargo_path);
 
         writeln!(file, "[package]")?;
@@ -55,7 +59,7 @@ pub struct Dependency {
     pub features: Option<Vec<String>>,
 }
 impl Dependency {
-    pub fn new(name: &str) -> Dependency {
+    pub fn test(name: &str) -> Dependency {
         Dependency {
             name: name.to_string(),
             version: "2039482398408".to_string(),
