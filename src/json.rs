@@ -13,23 +13,19 @@ pub struct DependencyInfo {
 pub type JsonDependencies = std::collections::HashMap<String, DependencyInfo>;
 
 pub fn load() -> JsonDependencies {
-    if let Some(config) = FileManager::config_path() {
-        let file = FileManager::copen(&config);
-        serde_json::from_reader(file).unwrap_or(JsonDependencies::new())
-    } else {
-        JsonDependencies::new()
-    }
+    let fm = FileManager::default();
+    let file = fm.copen(&fm.config_file());
+    serde_json::from_reader(file).unwrap_or(JsonDependencies::new())
 }
 
 pub fn save(jd: &JsonDependencies) {
-    if let Some(config) = FileManager::config_path() {
-        let file = FileManager::copen(&config);
-        file.set_len(0).unwrap();
-        serde_json::to_writer(file, jd).unwrap_or_else(|e| {
-            eprintln!("ERROR: serde_json error: {e}");
-            std::process::exit(1);
-        })
-    }
+    let fm = FileManager::default();
+    let file = fm.copen(&fm.config_file());
+    file.set_len(0).unwrap();
+    serde_json::to_writer(file, jd).unwrap_or_else(|e| {
+        eprintln!("ERROR: serde_json error: {e}");
+        std::process::exit(1);
+    })
 }
 
 pub fn get_dependency(jd: &JsonDependencies, name: &str) -> Option<Dependency> {

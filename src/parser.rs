@@ -11,7 +11,8 @@ impl Parser {
     pub fn from_file(path: &str) -> Self {
         use std::io::{BufRead, BufReader};
 
-        let file = FileManager::copen(path);
+        let fm = FileManager::default();
+        let file = fm.copen(path);
         let rr = BufReader::new(file);
 
         let mut imports = vec![];
@@ -60,5 +61,8 @@ impl Parser {
             },
             is_main,
         }
+    }
+    pub fn default_save(&self, path: &str) -> std::io::Result<()> {
+        Ok(())
     }
 }

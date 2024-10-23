@@ -21,14 +21,11 @@ impl Project {
     pub fn write(&self) -> std::io::Result<()> {
         use std::io::Write;
 
-        let spliter = match std::env::consts::OS {
-            "windows" => "\\",
-            _ => "/",
-        };
-        FileManager::create_project(&self.name)?;
+        let fm = FileManager::default();
+        fm.create_project(&self.name)?;
 
-        let cargo_path = format!("{}{spliter}Cargo.toml", &self.name);
-        let mut file = FileManager::copen(&cargo_path);
+        let cargo_path = format!("{}{}Cargo.toml", &self.name, fm.del);
+        let mut file = fm.copen(&cargo_path);
 
         writeln!(file, "[package]")?;
         writeln!(file, "name = \"{}\"", &self.name)?;
