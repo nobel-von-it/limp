@@ -4,7 +4,7 @@ description = "effortless project initialization and dependency management"
 license = "MIT"
 authors = ["Nobel von it"]
 repository = "https://github.com/nobel-von-it/limp"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2021"
 
 [dependencies]

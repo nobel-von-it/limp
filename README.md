@@ -52,8 +52,22 @@ limp new/add serde -v 1.0.123 -p path/to/snippet.rs -f derive serde_derive
     -f or --features: A list of features to enable (optional, use at the end).
     -p or --path: The path to a code snippet related to the dependency (optional).
 
-###   Hello World (just test function):
- 
+###   Help:
+
 ```sh
-limp hello
+limp del/delete/remove serde 
 ```
+    serde: The name of the dependency.
+
+###   List added Dependencies:
+
+```sh
+limp list 
+```
+
+###   Help:
+
+```sh
+limp help/h/-h/--help
+```
+

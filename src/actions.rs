@@ -4,6 +4,8 @@ use crate::{
     toml::{Dependency, Project},
 };
 
+const VERSION: &str = "0.1.5";
+
 pub enum Action {
     Init {
         name: String,
@@ -163,6 +165,6 @@ impl Action {
         }
     }
     pub fn version() {
-        println!("version: 0.1.4")
+        println!("version: {}", VERSION)
     }
 }
