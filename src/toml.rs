@@ -77,7 +77,8 @@ impl From<FullCrateInfo> for Dependency {
         Dependency {
             name: value.crate_info.name,
             version: latest_version.num.clone(),
-            features: latest_version.get_features(),
+            // fix: if use this function, in deps adding all features
+            features: None,
         }
     }
 }
