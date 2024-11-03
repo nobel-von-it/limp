@@ -13,13 +13,16 @@ pub fn eusage() {
 
 Commands:
   init <name> [-d <dependencies>...]
-    Initialize a new project with the given name and optional dependencies.
+    Initialize a new project with the given name and optional dependencies
 
   new <name> [-v <version>] [-f <features>...] [-p <path-to-snippet>]
-    Add a new dependency to the project.
+    Add a new dependency to the project
+
+  del <name>
+    Delete dependency from database
 
   list | all | show-all
-    List all dependencies.
+    List all dependencies
 
   help
     Show usage

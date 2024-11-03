@@ -79,7 +79,18 @@ impl Config {
                         path_to_snippet,
                     })
                 }
+                "remove" | "del" | "delete" => {
+                    if let Some(name) = args.next() {
+                        config.action = Some(Action::Delete {
+                            name: name.to_string(),
+                        })
+                    } else {
+                        eusage();
+                        exit(1);
+                    }
+                }
                 "list" | "all" | "show-all" => config.action = Some(Action::List),
+                "v" | "version" => config.action = Some(Action::Version),
                 "h" | "-h" | "help" | "--help" => config.action = Some(Action::Help),
                 _ => {
                     eusage();
@@ -99,7 +110,9 @@ impl Config {
                     features,
                     path_to_snippet,
                 } => Action::add_new(name, version, features, path_to_snippet),
+                Action::Delete { name } => Action::delete(name),
                 Action::List => Action::list(),
+                Action::Version => Action::version(),
                 Action::Help => eusage(),
             }
         }

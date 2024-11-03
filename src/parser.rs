@@ -2,9 +2,22 @@ use crate::files::FileManager;
 
 #[derive(Debug, Clone, Default)]
 pub struct Parser {
+    path: String,
     imports: Option<String>,
     body: Option<String>,
     is_main: bool,
+}
+
+impl std::fmt::Display for Parser {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Some(imps) = &self.imports {
+            write!(f, "{}", imps)?
+        }
+        if let Some(bd) = &self.body {
+            write!(f, "{}", bd)?
+        }
+        write!(f, "")
+    }
 }
 
 impl Parser {
@@ -49,6 +62,7 @@ impl Parser {
         });
 
         Parser {
+            path: path.to_string(),
             imports: if imports.is_empty() {
                 None
             } else {
@@ -62,7 +76,23 @@ impl Parser {
             is_main,
         }
     }
-    pub fn default_save(&self, path: &str) -> std::io::Result<()> {
+    pub fn default_save(&self) -> std::io::Result<()> {
+        let fm = FileManager::default();
+        let snip_dir = fm.storage_dir();
+        println!("{}", &snip_dir);
+        println!("{}", &self.path);
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::Parser;
+
+    #[test]
+    fn default_save_test() {
+        let p = Parser::from_file("./src/parser.rs");
+        p.default_save().unwrap();
+        println!("{p}");
     }
 }

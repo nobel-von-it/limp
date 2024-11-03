@@ -15,7 +15,11 @@ pub enum Action {
         features: Option<Vec<String>>,
         path_to_snippet: Option<String>,
     },
+    Delete {
+        name: String,
+    },
     List,
+    Version,
     Help,
 }
 impl Action {
@@ -135,6 +139,16 @@ impl Action {
         //     None
         // }
     }
+    pub fn delete(name: &str) {
+        let mut jd = json::load();
+        if jd.iter().any(|(n, _)| n == name) {
+            jd.remove(name);
+            println!("{name} deleted")
+        } else {
+            println!("{name} doesn't exist");
+        }
+        json::save(&jd);
+    }
     pub fn list() {
         let jd = json::load();
         for (k, v) in jd.iter() {
@@ -147,5 +161,8 @@ impl Action {
                 println!("  p: {path}")
             }
         }
+    }
+    pub fn version() {
+        println!("version: 0.1.4")
     }
 }
