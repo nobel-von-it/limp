@@ -90,6 +90,7 @@ impl Config {
                     }
                 }
                 "list" | "all" | "show-all" => config.action = Some(Action::List),
+                "update" | "up" => config.action = Some(Action::Update),
                 "v" | "version" => config.action = Some(Action::Version),
                 "h" | "-h" | "help" | "--help" => config.action = Some(Action::Help),
                 _ => {
@@ -112,6 +113,7 @@ impl Config {
                 } => Action::add_new(name, version, features, path_to_snippet),
                 Action::Delete { name } => Action::delete(name),
                 Action::List => Action::list(),
+                Action::Update => Action::update(),
                 Action::Version => Action::version(),
                 Action::Help => eusage(),
             }

@@ -1,5 +1,5 @@
 use crate::{
-    crates::FullCrateInfo,
+    crates::{FullCrateInfo, Version},
     json::{self, DependencyInfo},
     toml::{Dependency, Project},
 };
@@ -20,6 +20,7 @@ pub enum Action {
     Delete {
         name: String,
     },
+    Update,
     List,
     Version,
     Help,
@@ -82,7 +83,12 @@ impl Action {
                 }
                 // check version provided and version is valid else get latest version from cratesio
                 let res_version = if let Some(ver) = version {
-                    if let Some(version) = crate_.get_all_versions().iter().find(|v| &v.num == ver)
+                    let nver = if ver.split(".").collect::<Vec<&str>>().len() == 1 {
+                        format!("{}.0.0", &ver)
+                    } else {
+                        ver.clone()
+                    };
+                    if let Some(version) = crate_.get_all_versions().iter().find(|v| v.num == nver)
                     {
                         version.clone()
                     } else {
@@ -148,6 +154,19 @@ impl Action {
             println!("{name} deleted")
         } else {
             println!("{name} doesn't exist");
+        }
+        json::save(&jd);
+    }
+    pub fn update() {
+        let mut jd = json::load();
+        for (k, v) in jd.iter_mut() {
+            if let Some(crate_) = FullCrateInfo::get_from_cratesio(k) {
+                if let Some(last_version) = crate_.get_version(0) {
+                    if last_version.num != v.version {
+                        v.version = last_version.num.clone();
+                    }
+                }
+            }
         }
         json::save(&jd);
     }
