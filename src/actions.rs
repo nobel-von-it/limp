@@ -4,7 +4,7 @@ use crate::{
     toml::{Dependency, Project},
 };
 
-const VERSION: &str = "0.1.5";
+const VERSION: &str = "0.1.6";
 
 pub enum Action {
     Init {
