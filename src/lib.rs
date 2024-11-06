@@ -29,3 +29,21 @@ Commands:
 "
     );
 }
+
+pub fn to_version_string(num: &str) -> String {
+    match num
+        .split(".")
+        .map(|s| s.parse::<u16>().unwrap_or_default())
+        .collect::<Vec<u16>>()
+        .len()
+    {
+        // 1.1.1 -> nothing change
+        3 => num.to_string(),
+        // 0.25 -> 0.25.0
+        2 => format!("{}.0", num),
+        // 1 -> 1.0.0
+        1 => format!("{}.0.0", num),
+        // this's impossible
+        _ => unreachable!(),
+    }
+}

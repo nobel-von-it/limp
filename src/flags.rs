@@ -1,6 +1,6 @@
 use std::process::exit;
 
-use crate::{actions::Action, eusage};
+use crate::{actions::Action, eusage, to_version_string};
 
 #[derive(Default)]
 pub struct Config {
@@ -52,7 +52,7 @@ impl Config {
                         match arg.as_str() {
                             "-v" | "--version" => {
                                 if let Some(ver) = args.next() {
-                                    version = Some(ver.to_string());
+                                    version = Some(to_version_string(ver));
                                 }
                             }
                             "-p" | "--path" => {
