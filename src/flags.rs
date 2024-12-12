@@ -36,7 +36,7 @@ impl Config {
                     };
                     config.action = Some(Action::Init { name, dependencies })
                 }
-                "new" | "add" => {
+                "new" => {
                     let name = args
                         .next()
                         .unwrap_or_else(|| {
@@ -79,6 +79,13 @@ impl Config {
                         path_to_snippet,
                     })
                 }
+                "add" => {
+                    if let Some(name) = args.next() {
+                        config.action = Some(Action::Add {
+                            name: name.to_string(),
+                        })
+                    }
+                }
                 "remove" | "del" | "delete" => {
                     if let Some(name) = args.next() {
                         config.action = Some(Action::Delete {
@@ -111,6 +118,7 @@ impl Config {
                     features,
                     path_to_snippet,
                 } => Action::add_new(name, version, features, path_to_snippet),
+                Action::Add { name } => Action::add_to_crate(name),
                 Action::Delete { name } => Action::delete(name),
                 Action::List => Action::list(),
                 Action::Update => Action::update(),

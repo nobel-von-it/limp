@@ -10,7 +10,7 @@ impl FullCrateInfo {
     // TODO: rewrite to Result and use ?
     pub fn get_from_cratesio(name: &str) -> Option<Self> {
         let url = format!("https://crates.io/api/v1/crates/{}", name);
-        if let Ok(res) = ureq::get(&url).set("User-Agent", "limp/0.1.3").call() {
+        if let Ok(res) = ureq::get(&url).set("User-Agent", "limp/0.1.6").call() {
             if let Ok(body) = res.into_string() {
                 if let Ok(crate_info) = serde_json::from_str::<FullCrateInfo>(&body) {
                     return Some(crate_info);

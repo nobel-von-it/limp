@@ -20,6 +20,9 @@ pub enum Action {
     Delete {
         name: String,
     },
+    Add {
+        name: String,
+    },
     Update,
     List,
     Version,
@@ -53,7 +56,14 @@ impl Action {
         }
 
         // create project structure
-        let project = Project::new(name, resdeps);
+        let project = Project::new(
+            name,
+            if resdeps.is_empty() {
+                None
+            } else {
+                Some(resdeps)
+            },
+        );
 
         // write all information into Cargo.toml
         project.write().map_err(|e| eprintln!("{e}")).unwrap()
@@ -146,6 +156,13 @@ impl Action {
         // } else {
         //     None
         // }
+    }
+    pub fn add_to_crate(name: &str) {
+        let jd = json::load();
+        if !jd.iter().any(|(n, _)| n == name) {
+            println!("{name} not exist");
+            return;
+        }
     }
     pub fn delete(name: &str) {
         let mut jd = json::load();

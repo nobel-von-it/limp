@@ -5,7 +5,7 @@ pub struct Project {
     pub version: String,
     pub edition: String,
     // TODO: add optional fields
-    pub dependencies: Vec<Dependency>,
+    pub dependencies: Option<Vec<Dependency>>,
 }
 impl Default for Project {
     fn default() -> Self {
@@ -13,7 +13,7 @@ impl Default for Project {
             name: String::from("limp"),
             version: String::from("0.1.0"),
             edition: String::from("2021"),
-            dependencies: Vec::new(),
+            dependencies: None,
         }
     }
 }
@@ -33,14 +33,24 @@ impl Project {
         writeln!(file, "edition = \"{}\"", &self.edition)?;
         writeln!(file)?;
         writeln!(file, "[dependencies]")?;
-        if !self.dependencies.is_empty() {
-            for dep in self.dependencies.iter() {
+        if let Some(deps) = &self.dependencies {
+            for dep in deps.iter() {
                 writeln!(file, "{}", dep)?
             }
         }
         Ok(())
     }
-    pub fn new(name: &str, deps: Vec<Dependency>) -> Self {
+    pub fn append(&self, dep: &Dependency) -> std::io::Result<()> {
+        use std::io::Write;
+
+        let fm = FileManager::default();
+        let cargo_path = format!("{}{}Cargo.toml", &self.name, fm.del);
+        let mut file = fm.copen(&cargo_path);
+
+        writeln!(file, "{}", dep)?;
+        Ok(())
+    }
+    pub fn new(name: &str, deps: Option<Vec<Dependency>>) -> Self {
         Project {
             name: name.to_string(),
             dependencies: deps,

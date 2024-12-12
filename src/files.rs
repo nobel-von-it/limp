@@ -5,7 +5,7 @@ fn main() {
     println!("Hello, limp!");
 }"#;
 const NAME: &str = "limp";
-const CRATE_INFO_FILE: &str = "dependencies.json";
+const CRATE_INFO_FILE: &str = "dependencies.db";
 const SNIPPETS_DIR: &str = "snippets";
 
 // bool - is windows
@@ -95,6 +95,7 @@ impl FileManager {
             std::fs::File::options()
                 .read(true)
                 .write(true)
+                .append(true)
                 .open(path)
                 .unwrap()
         } else {

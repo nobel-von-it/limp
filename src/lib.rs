@@ -5,6 +5,7 @@ pub mod files;
 pub mod flags;
 pub mod json;
 pub mod parser;
+pub mod sqlite;
 pub mod toml;
 
 pub fn eusage() {
