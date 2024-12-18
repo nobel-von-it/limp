@@ -36,7 +36,7 @@ impl CommandHandler {
     pub fn build() -> Command {
         Command::new("limp")
             .about("Limp is a simple CLI tool for managing your rust projects.")
-            .version("v0.1.7")
+            .version("v0.2.0")
             .subcommand_required(true)
             .subcommand(
                 Command::new("init")
@@ -190,15 +190,21 @@ impl CommandHandler {
                 Action::Add { name } => {
                     if let Some(path) = find_toml() {
                         let mut file = open(path)?;
+                        let js = JsonStorage::load(config_path())?;
 
                         let mut content = String::new();
                         file.read_to_string(&mut content)?;
 
+                        let deps = if let Some(existing_deps) = js.get(name) {
+                            existing_deps.to_string()
+                        } else {
+                            JsonDependency::new(name)?.to_string()
+                        };
                         if content.contains("[dependencies]") {
-                            writeln!(file, "{}", JsonDependency::new(name)?)?
+                            writeln!(file, "{}", deps)?
                         } else {
                             writeln!(file, "\n[dependencies]")?;
-                            writeln!(file, "{}", JsonDependency::new(name)?)?
+                            writeln!(file, "{}", deps)?
                         }
                     } else {
                         return Err(LimpError::CargoTomlNotFound(format!(

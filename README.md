@@ -1,73 +1,93 @@
- # LIMP: Library for Initialize ManiPulation
+# Limp - Rust Project Management CLI
 
-LIMP is a powerful tool designed to streamline project initialization and dependency management. With LIMP, you can easily create new projects and manage dependencies, ensuring a smooth development experience.
+## Overview
+
+Limp is a simple Command Line Interface (CLI) tool designed to streamline dependency management for Rust projects. It provides an easy way to initialize projects, add dependencies, and manage your project's configuration.
+
 
 ## Features
 
-- **Effortless Project Initialization:** Quickly set up new projects with a single command.
-- **Dependency Management:** Add and manage dependencies with ease, including version and feature handling.
-- **Integration with Crates.io:** Automatically fetch the latest versions and features of dependencies from Crates.io.
 
-## Getting Started
+- **Effortless Project Initialization**: Quickly set up new projects with a single command.
+- **Dependency Management**: Add and manage dependencies with ease, including version and feature handling.
+- **Integration with Crates.io**: If you want, fetch the latest versions and features of dependencies from Crates.io.
+- **Configuration Management**: Manage your project's dependencies and configuration easily.
+- **Code Generation**: Generate code snippets based on dependencies and configuration. (*yet not supported*)
 
-### Prerequisites
+## Installation
 
-- Rust installed on your system. You can install Rust from [rustup.rs](https://rustup.rs/).
 
-### Installation
+You have two primary methods to install and use Limp:
 
-To install LIMP, you can clone the repository and build it locally:
-
-```sh
-git clone https://github.com/yourusername/limp
-cd limp
-cargo build --release
-```
-
-Or with cargo:
-
-```sh
+### Option 1: Install via Cargo (Recommended)
+```bash
 cargo install limp
 ```
-
-## Usage
-
-LIMP provides three main commands:
-
-###   Initialize a New Project:
-
-```sh
-limp init my-project -d serde tokio
-```
-    my-project: The name of the project.
-    -d or --deps: A list of dependencies to include (use at the end).
-
-###   Add a New Dependency:
-
-```sh
-limp new/add serde -v 1.0.123 -p path/to/snippet.rs -f derive serde_derive 
-```
-    serde: The name of the dependency.
-    -v or --version: The version of the dependency (optional, by default use latest).
-    -f or --features: A list of features to enable (optional, use at the end).
-    -p or --path: The path to a code snippet related to the dependency (optional).
-
-###   Help:
-
-```sh
-limp del/delete/remove serde 
-```
-    serde: The name of the dependency.
-
-###   List added Dependencies:
-
-```sh
-limp list 
+After installation, you can use Limp directly:
+```bash
+limp init my_project
+limp new serde
+# Other commands...
 ```
 
-###   Help:
-
-```sh
-limp help/h/-h/--help
+### Option 2: Clone and Run from Source
+If you want to use the latest development version or contribute to the project:
+```bash
+git clone --depth=1 https://github.com/nobel-von-it/limp
+cd limp
+cargo run -- init my_project
+cargo run -- new serde
+# Use cargo run -- before each command when running from source
 ```
+
+### Requirements
+- Rust toolchain (rustc, cargo)
+- Git (for source installation)
+## Usage/Examples
+
+### 1. Initialize a New Project
+```bash
+limp init <project-name> [-d <dependencies>]
+```
+- Creates a new Rust project
+- Optional: Specify dependencies during initialization with `-d` flag
+- Example: `limp init my_project -d serde tokio`
+
+### 2. Add a New Dependency
+```bash
+limp new <dependency-name> [options]
+```
+Options:
+- `-v, --version <version>`: Specify dependency version
+- `-p, --path <path_to_snippet>`: Path to a code snippet (*yet not supported*)
+- `-f, --features <feature1> <feature2>`: Enable specific features
+
+Example: 
+```bash
+limp new serde -v 1.0.0 -f derive
+```
+
+### 3. Delete a Dependency
+```bash
+limp del <dependency-name>
+```
+Removes a dependency from your configuration
+
+### 4. Add Dependency to Existing Project
+```bash
+limp add <dependency-name>
+```
+Adds a dependency directly to the current project's `Cargo.toml`
+
+### 5. List Dependencies
+```bash
+limp list
+```
+Displays all configured dependencies
+
+### 6. Update Dependencies
+```bash
+limp update
+```
+Updates all dependencies to their latest versions
 
