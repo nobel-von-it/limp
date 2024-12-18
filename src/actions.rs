@@ -1,11 +1,12 @@
+use std::io::{Read, Write};
+
+use clap::{Arg, ArgMatches, Command};
+
 use crate::{
-    crates::{FullCrateInfo, Version},
-    json::{self, DependencyInfo},
-    toml::{Dependency, Project},
+    error::LimpError,
+    files::{config_path, create_project, find_toml, open},
+    storage::{JsonDependency, JsonStorage},
 };
-
-const VERSION: &str = "0.1.6";
-
 pub enum Action {
     Init {
         name: String,
@@ -25,182 +26,205 @@ pub enum Action {
     },
     Update,
     List,
-    Version,
-    Help,
 }
-impl Action {
-    pub fn init(name: &str, mbdeps: &Option<Vec<String>>) {
-        // loading hashmap with all dependencies read only
-        let jd = json::load();
 
-        // mini debug
-        println!("Initialize project with name {}", &name);
-
-        // Initialize variable for project
-        let mut resdeps = vec![];
-
-        // figure out dependencies
-        if let Some(deps) = mbdeps {
-            for d in deps.iter() {
-                // check existing
-                match json::get_dependency(&jd, d) {
-                    Some(d) => resdeps.push(d),
-                    None => {
-                        // get default last version from cratesio if not exist
-                        if let Some(new_dep) = FullCrateInfo::get_from_cratesio(d) {
-                            resdeps.push(Dependency::from(new_dep));
-                        }
-                    }
-                }
-            }
-        }
-
-        // create project structure
-        let project = Project::new(
-            name,
-            if resdeps.is_empty() {
-                None
-            } else {
-                Some(resdeps)
-            },
-        );
-
-        // write all information into Cargo.toml
-        project.write().map_err(|e| eprintln!("{e}")).unwrap()
+#[derive(Default)]
+pub struct CommandHandler {
+    pub action: Option<Action>,
+}
+impl CommandHandler {
+    pub fn build() -> Command {
+        Command::new("limp")
+            .about("Limp is a simple CLI tool for managing your rust projects.")
+            .version("v0.1.7")
+            .subcommand_required(true)
+            .subcommand(
+                Command::new("init")
+                    .about("Initialize a new project")
+                    .arg(Arg::new("name").required(true))
+                    .arg(
+                        Arg::new("dependencies")
+                            .required(false)
+                            .short('d')
+                            .long("dependencies")
+                            .num_args(0..)
+                            .help("Optional dependencies"),
+                    ),
+            )
+            .subcommand(
+                Command::new("new")
+                    .about("Add a new dependency")
+                    .arg(Arg::new("name").required(true))
+                    .arg(
+                        Arg::new("version")
+                            .required(false)
+                            .short('v')
+                            .long("version")
+                            .help("Specify version"),
+                    )
+                    .arg(
+                        Arg::new("path_to_snippet")
+                            .required(false)
+                            .short('p')
+                            .long("path")
+                            .help("Path to snippet"),
+                    )
+                    .arg(
+                        Arg::new("features")
+                            .required(false)
+                            .short('f')
+                            .long("features")
+                            .num_args(0..)
+                            .help("Optional features"),
+                    ),
+            )
+            .subcommand(
+                Command::new("del")
+                    .about("Delete dependency")
+                    .arg(Arg::new("name").required(true)),
+            )
+            .subcommand(
+                Command::new("add")
+                    .about("Add dependency to existing project")
+                    .arg(Arg::new("name").required(true)),
+            )
+            .subcommand(Command::new("list").about("List dependencies"))
+            .subcommand(Command::new("update").about("Update dependencies"))
+            .subcommand(Command::new("version").about("Print version"))
     }
-    pub fn add_new(
-        name: &str,
-        version: &Option<String>,
-        features: &Option<Vec<String>>,
-        path_to_snippet: &Option<String>,
-    ) {
-        // loading hashmap with all dependencies read-append
-        let mut jd = json::load();
-
-        // check name in hashmap and
-        if !jd.iter().any(|(n, _)| n == name) {
-            // get info about crate from cratesio
-            if let Some(crate_) = FullCrateInfo::get_from_cratesio(name) {
-                // initialize base dependency info
-                let mut dep_info = DependencyInfo::default();
-
-                if let Some(path_to_snippet) = path_to_snippet {
-                    if std::path::Path::new(path_to_snippet).exists() {
-                        dep_info.path_to_snippet = Some(path_to_snippet.to_string());
-                    } else {
-                        println!("{path_to_snippet} not exist");
-                    }
-                }
-                // check version provided and version is valid else get latest version from cratesio
-                let res_version = if let Some(ver) = version {
-                    let nver = if ver.split(".").collect::<Vec<&str>>().len() == 1 {
-                        format!("{}.0.0", &ver)
-                    } else {
-                        ver.clone()
-                    };
-                    if let Some(version) = crate_.get_all_versions().iter().find(|v| v.num == nver)
-                    {
-                        version.clone()
-                    } else {
-                        crate_.get_version(0).unwrap()
-                    }
-                } else {
-                    crate_.get_version(0).unwrap()
-                };
-                dep_info.version = res_version.num.clone();
-
-                // check features provided
-                if let Some(features) = features {
-                    let mut res_features = vec![];
-                    for f in features.iter() {
-                        if let Some(d_features) = res_version.get_features() {
-                            // mini debug
-                            // println!("{}", f);
-                            // println!("{:?}", d_features.clone());
-
-                            // check feature valid
-                            if d_features.contains(f) {
-                                res_features.push(f.to_string());
-                            } else {
-                                eprintln!("feature {f} doesn't exist");
+    pub fn parse(args: &ArgMatches) -> Self {
+        Self {
+            action: match args.subcommand() {
+                Some((subname, subargs)) => match subname {
+                    "init" => Some(Action::Init {
+                        name: subargs.get_one::<String>("name").unwrap().clone(),
+                        dependencies: subargs
+                            .get_many::<String>("dependencies")
+                            .map(|d| d.cloned().collect()),
+                    }),
+                    "new" => Some(Action::NewDependency {
+                        name: subargs.get_one::<String>("name").unwrap().clone(),
+                        version: subargs.get_one::<String>("version").map(|v| {
+                            match v
+                                .split(".")
+                                .map(|s| s.parse::<u16>().unwrap_or_default())
+                                .collect::<Vec<u16>>()
+                                .len()
+                            {
+                                // 1.1.1 -> nothing change
+                                3 => v.to_string(),
+                                // 0.25 -> 0.25.0
+                                2 => format!("{}.0", v),
+                                // 1 -> 1.0.0
+                                1 => format!("{}.0.0", v),
+                                // no way
+                                _ => unreachable!(),
                             }
+                        }),
+                        features: subargs
+                            .get_many::<String>("features")
+                            .map(|f| f.cloned().collect()),
+                        path_to_snippet: subargs.get_one::<String>("path_to_snippet").cloned(),
+                    }),
+                    "del" => Some(Action::Delete {
+                        name: subargs.get_one::<String>("name").unwrap().clone(),
+                    }),
+                    "add" => Some(Action::Add {
+                        name: subargs.get_one::<String>("name").unwrap().clone(),
+                    }),
+                    "list" => Some(Action::List),
+                    "update" => Some(Action::Update),
+                    _ => None,
+                },
+
+                None => None,
+            },
+        }
+    }
+    pub fn make_action(&self) -> Result<(), LimpError> {
+        if let Some(act) = &self.action {
+            match act {
+                Action::Init { name, dependencies } => {
+                    let js = JsonStorage::load(config_path())?;
+                    let mut odeps = None;
+                    if let Some(deps) = dependencies {
+                        let mut result_deps = vec![];
+                        for d in deps.iter() {
+                            result_deps.push(match js.get(d) {
+                                Some(d) => d.to_string(),
+                                None => JsonDependency::new(d)?.to_string(),
+                            });
+                        }
+                        if !result_deps.is_empty() {
+                            odeps = Some(result_deps);
                         }
                     }
-                    dep_info.features = Some(res_features);
+
+                    create_project(name, odeps.as_deref())?
                 }
+                Action::NewDependency {
+                    name,
+                    version,
+                    features,
+                    path_to_snippet,
+                } => {
+                    let mut js = JsonStorage::load(config_path())?;
 
-                // insert can't return some
-                let _ = jd.insert(name.to_string(), dep_info);
-                json::save(&jd);
-            } else {
-                eprintln!("crate {name} not in cratesio");
-            }
-        } else {
-            // TODO: rewrite crate question
-            eprintln!("crate with name {name} exist");
-        }
+                    let jd = JsonDependency::new_full(
+                        name,
+                        version.as_deref(),
+                        features.as_deref(),
+                        path_to_snippet.as_deref(),
+                    )?;
+                    js.add(jd);
 
-        // if let Some(d) = jd.insert(
-        //     name.to_string(),
-        //     DependencyInfo {
-        //         version: version.to_string(),
-        //         features,
-        //         path_to_snippet,
-        //     },
-        // ) {
-        //     Some(Dependency {
-        //         name: name.to_string(),
-        //         version: d.version.clone(),
-        //         features: d.features.clone(),
-        //     })
-        // } else {
-        //     None
-        // }
-    }
-    pub fn add_to_crate(name: &str) {
-        let jd = json::load();
-        if !jd.iter().any(|(n, _)| n == name) {
-            println!("{name} not exist");
-            return;
-        }
-    }
-    pub fn delete(name: &str) {
-        let mut jd = json::load();
-        if jd.iter().any(|(n, _)| n == name) {
-            jd.remove(name);
-            println!("{name} deleted")
-        } else {
-            println!("{name} doesn't exist");
-        }
-        json::save(&jd);
-    }
-    pub fn update() {
-        let mut jd = json::load();
-        for (k, v) in jd.iter_mut() {
-            if let Some(crate_) = FullCrateInfo::get_from_cratesio(k) {
-                if let Some(last_version) = crate_.get_version(0) {
-                    if last_version.num != v.version {
-                        v.version = last_version.num.clone();
+                    js.save(config_path())?;
+                }
+                Action::Delete { name } => {
+                    let mut js = JsonStorage::load(config_path())?;
+
+                    js.remove(name);
+
+                    js.save(config_path())?;
+                }
+                Action::Add { name } => {
+                    if let Some(path) = find_toml() {
+                        let mut file = open(path)?;
+
+                        let mut content = String::new();
+                        file.read_to_string(&mut content)?;
+
+                        if content.contains("[dependencies]") {
+                            writeln!(file, "{}", JsonDependency::new(name)?)?
+                        } else {
+                            writeln!(file, "\n[dependencies]")?;
+                            writeln!(file, "{}", JsonDependency::new(name)?)?
+                        }
+                    } else {
+                        return Err(LimpError::CargoTomlNotFound(format!(
+                            "dep: {}\npath: {}",
+                            name,
+                            std::env::current_dir().unwrap().display()
+                        )));
                     }
                 }
+                Action::List => {
+                    let js = JsonStorage::load(config_path())?;
+                    js.dependencies
+                        .iter()
+                        .enumerate()
+                        .for_each(|(i, (_, d))| println!("{}: {}", i + 1, d));
+                }
+                Action::Update => {
+                    let mut js = JsonStorage::load(config_path())?;
+                    js.dependencies
+                        .iter_mut()
+                        .map(|(_, d)| d)
+                        .try_for_each(|d| d.update())?;
+                    js.save(config_path())?
+                }
             }
         }
-        json::save(&jd);
-    }
-    pub fn list() {
-        let jd = json::load();
-        for (k, v) in jd.iter() {
-            println!("{k} ->");
-            println!("  v: {ver}", ver = &v.version);
-            if let Some(features) = &v.features {
-                println!("  f: {fs}", fs = &features.join(", "))
-            }
-            if let Some(path) = &v.path_to_snippet {
-                println!("  p: {path}")
-            }
-        }
-    }
-    pub fn version() {
-        println!("version: {}", VERSION)
+        Ok(())
     }
 }

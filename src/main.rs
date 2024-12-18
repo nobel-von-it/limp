@@ -1,7 +1,10 @@
-use limp::flags::Config;
+use limp::actions::CommandHandler;
 
 fn main() {
-    let args = std::env::args().skip(1).collect::<Vec<String>>();
-    let conf = Config::parse(&args);
-    conf.make_action();
+    let matches = CommandHandler::build().get_matches();
+    let ch = CommandHandler::parse(&matches);
+    if let Err(e) = ch.make_action() {
+        eprintln!("ERROR: {e}");
+        std::process::exit(1);
+    }
 }

@@ -4,10 +4,12 @@ description = "effortless project initialization and dependency management"
 license = "MIT"
 authors = ["Nobel von it"]
 repository = "https://github.com/nobel-von-it/limp"
-version = "0.1.6"
+version = "0.1.7"
 edition = "2021"
 
 [dependencies]
 ureq = "2.10.1"
 serde = { version = "1.0.210", features = ["derive"] }
 serde_json = "1.0.128"
+clap = "4.5.23"
+thiserror = "2.0.8"
