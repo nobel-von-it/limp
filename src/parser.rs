@@ -1,3 +1,82 @@
+use std::path::Path;
+
+use serde::{Deserialize, Serialize};
+
+use crate::{error::LimpError, files::open};
+
+#[derive(Debug, Clone)]
+pub struct ParserEntity(String, String);
+
+impl ParserEntity {
+    pub fn from_file(path: &str) -> Result<Self, LimpError> {
+        use std::io::{BufRead, BufReader};
+
+        let file = open(path)?;
+        if Path::new(path)
+            .extension()
+            .ok_or(LimpError::EmptyFile(path.to_string()))?
+            .to_str()
+            .ok_or(LimpError::EmptyFile(path.to_string()))?
+            == "rs"
+        {
+            return Err(LimpError::NotSupported(format!("file extension: {}", path)));
+        }
+
+        let rr = BufReader::new(file);
+
+        let mut imports = vec![];
+        let mut body = vec![];
+        let mut is_main = false;
+
+        let mut found_code = false;
+        let mut in_imp_block = false;
+
+        rr.lines().for_each(|l| {
+            if let Ok(l) = l {
+                let tl = l.trim();
+
+                if found_code {
+                    body.push(l.clone())
+                } else if in_imp_block {
+                    imports.push(l.clone());
+                    if tl.ends_with("};") {
+                        in_imp_block = false;
+                    }
+                } else if tl.starts_with("use") {
+                    imports.push(l.clone());
+                    if tl.ends_with('{') {
+                        in_imp_block = true;
+                    }
+                } else {
+                    if l.contains("main") {
+                        is_main = true;
+                    }
+                    body.push(l.clone());
+                    found_code = true;
+                }
+            }
+        });
+
+        let imps = imports.join("\n");
+        let bd = body.join("\n");
+
+        if imps.is_empty() && bd.is_empty() {
+            return Err(LimpError::EmptyFile(path.to_string()));
+        }
+
+        Ok(ParserEntity(imps, bd))
+    }
+}
+
+#[derive(Default, Serialize, Deserialize)]
+pub struct ParserStorage {
+    pub snippets: Vec<(String, bool)>,
+}
+
+impl ParserStorage {
+    pub fn load() {}
+}
+
 // #[derive(Debug, Clone, Default)]
 // pub struct Parser {
 //     path: String,

@@ -22,4 +22,8 @@ pub enum LimpError {
     IncompatibleFeatures(String),
     #[error("Cannot add dependency: {0}")]
     CargoTomlNotFound(String),
+    #[error("Empty file: {0}")]
+    EmptyFile(String),
+    #[error("Not supported: {0}")]
+    NotSupported(String),
 }
