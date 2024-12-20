@@ -151,8 +151,8 @@ impl CommandHandler {
                         let mut result_deps = vec![];
                         for d in deps.iter() {
                             result_deps.push(match js.get(d) {
-                                Some(d) => d.to_string(),
-                                None => JsonDependency::new(d)?.to_string(),
+                                Some(d) => d.clone(),
+                                None => JsonDependency::new(d)?,
                             });
                         }
                         if !result_deps.is_empty() {

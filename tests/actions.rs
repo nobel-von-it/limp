@@ -1,12 +1,12 @@
+#![allow(dead_code)]
+
 use actions::{Action, CommandHandler};
 use error::LimpError;
 
-use crate::files::{self, open};
-use crate::storage::{JsonDependency, JsonStorage};
+use crate::storage::JsonDependency;
 use limp::*;
 use std::collections::HashMap;
-use std::fs::{self, File};
-use std::io::Write;
+use std::fs::{self};
 use std::path::Path;
 
 // Mock for JsonStorage
@@ -16,7 +16,7 @@ struct MockJsonStorage {
 }
 
 impl MockJsonStorage {
-    fn load<P: AsRef<Path>>(path: P) -> Result<Self, LimpError> {
+    fn load<P: AsRef<Path>>(_path: P) -> Result<Self, LimpError> {
         // Return a mock storage
         Ok(MockJsonStorage::default())
     }
@@ -26,7 +26,7 @@ impl MockJsonStorage {
             .insert(dependency.name.clone(), dependency);
     }
 
-    fn save<P: AsRef<Path>>(&self, path: P) -> Result<(), LimpError> {
+    fn save<P: AsRef<Path>>(&self, _path: P) -> Result<(), LimpError> {
         // Mock save to file (do nothing)
         Ok(())
     }
@@ -37,7 +37,7 @@ impl MockJsonStorage {
 }
 
 // Mock function for creating projects
-fn mock_create_project(name: &str, dependencies: Option<&[String]>) -> Result<(), LimpError> {
+fn mock_create_project(_name: &str, _dependencies: Option<&[String]>) -> Result<(), LimpError> {
     Ok(()) // No-op for testing
 }
 

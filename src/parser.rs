@@ -1,13 +1,15 @@
 use std::path::Path;
 
+use crate::{error::LimpError, files::open, storage::JsonDependency};
 use serde::{Deserialize, Serialize};
 
-use crate::{error::LimpError, files::open};
-
 #[derive(Debug, Clone)]
-pub struct ParserEntity(String, String);
+pub struct SnippetEntity {
+    imports: Option<String>,
+    body: Option<String>,
+}
 
-impl ParserEntity {
+impl SnippetEntity {
     pub fn from_file(path: &str) -> Result<Self, LimpError> {
         use std::io::{BufRead, BufReader};
 
@@ -57,14 +59,44 @@ impl ParserEntity {
             }
         });
 
-        let imps = imports.join("\n");
-        let bd = body.join("\n");
+        let imports = if imports.is_empty() {
+            None
+        } else {
+            Some(imports.join("\n"))
+        };
 
-        if imps.is_empty() && bd.is_empty() {
-            return Err(LimpError::EmptyFile(path.to_string()));
+        let body = if body.is_empty() {
+            None
+        } else {
+            Some(body.join("\n"))
+        };
+
+        Ok(SnippetEntity { imports, body })
+    }
+}
+
+pub fn load_from_deps(deps: &[JsonDependency]) -> Option<String> {
+    let mut all_imports = vec![];
+    let mut all_body = vec![];
+    for d in deps {
+        if let Some(path) = &d.path_to_snippet {
+            if let Ok(s) = SnippetEntity::from_file(path) {
+                if let Some(imp) = s.imports {
+                    all_imports.push(imp);
+                }
+                if let Some(body) = s.body {
+                    all_body.push(body);
+                }
+            }
         }
+    }
 
-        Ok(ParserEntity(imps, bd))
+    if all_body.is_empty() {
+        None
+    } else {
+        let imports = all_imports.join("\n");
+        let body = all_body.join("\n");
+        Some(format!("{}\n\n{}", imports, body))
     }
 }
 

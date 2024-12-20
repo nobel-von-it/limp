@@ -5,15 +5,15 @@ use std::{
     process::Stdio,
 };
 
-use crate::error::LimpError;
+use crate::{error::LimpError, parser::load_from_deps, storage::JsonDependency};
 
 const MAIN_SNIP: &str = r#"
 fn main() {
     println!("Hello, limp!");
 }"#;
-const NAME: &str = "limp";
-const CRATE_INFO_FILE: &str = "dependencies.db";
-const SNIPPETS_DIR: &str = "snippets";
+// const NAME: &str = "limp";
+// const CRATE_INFO_FILE: &str = "dependencies.db";
+// const SNIPPETS_DIR: &str = "snippets";
 
 // bool - is windows
 // pub struct FileManager {
@@ -149,12 +149,13 @@ pub fn open<P: AsRef<Path>>(path: P) -> Result<File, LimpError> {
     Ok(file)
 }
 
-pub fn create_project(name: &str, deps: Option<&[String]>) -> Result<(), LimpError> {
+pub fn create_project(name: &str, deps: Option<&[JsonDependency]>) -> Result<(), LimpError> {
     let project = PathBuf::from(format!("./{}", name));
     if project.exists() && project.read_dir()?.count() > 0 {
         return Err(LimpError::CrateExistsNotEmpty(name.to_string()));
     }
 
+    let mut main_snippet = MAIN_SNIP.to_string();
     let mut toml = open(project.join("Cargo.toml"))?;
     writeln!(toml, "[package]")?;
     writeln!(toml, "name = \"{}\"", name)?;
@@ -166,10 +167,11 @@ pub fn create_project(name: &str, deps: Option<&[String]>) -> Result<(), LimpErr
         for dep in deps.iter() {
             writeln!(toml, "{}", dep)?
         }
+        main_snippet = load_from_deps(deps).unwrap_or(MAIN_SNIP.to_string());
     }
 
     let mut main = open(project.join("src").join("main.rs"))?;
-    main.write_all(MAIN_SNIP.as_bytes())?;
+    main.write_all(main_snippet.as_bytes())?;
 
     if !std::process::Command::new("git")
         .args(["init", name])
