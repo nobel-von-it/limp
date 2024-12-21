@@ -159,8 +159,9 @@ impl CommandHandler {
                             odeps = Some(result_deps);
                         }
                     }
-
-                    create_project(name, odeps.as_deref())?
+                    println!("Adding dependencies: {:?} to {}", odeps, name);
+                    create_project(name, odeps.as_deref())?;
+                    println!("Done");
                 }
                 Action::NewDependency {
                     name,
@@ -179,6 +180,7 @@ impl CommandHandler {
                     js.add(jd);
 
                     js.save(config_path())?;
+                    println!("Successfully added {}", name);
                 }
                 Action::Delete { name } => {
                     let mut js = JsonStorage::load(config_path())?;
@@ -186,6 +188,7 @@ impl CommandHandler {
                     js.remove(name);
 
                     js.save(config_path())?;
+                    println!("Successfully deleted {}", name);
                 }
                 Action::Add { name } => {
                     if let Some(path) = find_toml() {
@@ -227,7 +230,8 @@ impl CommandHandler {
                         .iter_mut()
                         .map(|(_, d)| d)
                         .try_for_each(|d| d.update())?;
-                    js.save(config_path())?
+                    js.save(config_path())?;
+                    println!("Successfully updated all dependencies");
                 }
             }
         }
