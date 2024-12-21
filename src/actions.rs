@@ -4,7 +4,7 @@ use clap::{Arg, ArgMatches, Command};
 
 use crate::{
     error::LimpError,
-    files::{config_path, create_project, find_toml, open},
+    files::{config_path, create_project, find_toml, open, remove_from_snippets_dir},
     storage::{JsonDependency, JsonStorage},
 };
 pub enum Action {
@@ -186,6 +186,7 @@ impl CommandHandler {
                     let mut js = JsonStorage::load(config_path())?;
 
                     js.remove(name);
+                    remove_from_snippets_dir(name)?;
 
                     js.save(config_path())?;
                     println!("Successfully deleted {}", name);

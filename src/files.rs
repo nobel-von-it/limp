@@ -159,6 +159,16 @@ pub fn add_to_snippets_dir(name: &str, content: &str) -> Result<String, LimpErro
     Ok(path.display().to_string())
 }
 
+pub fn remove_from_snippets_dir(name: &str) -> Result<(), LimpError> {
+    let path = snippets_dir().join(format!("{name}.rs"));
+    if !path.exists() {
+        // This means the snippet doesn't provided by the user and nothing to remove
+        return Ok(());
+    }
+    fs::remove_file(path)?;
+    Ok(())
+}
+
 pub fn create_project(name: &str, deps: Option<&[JsonDependency]>) -> Result<(), LimpError> {
     let project = PathBuf::from(format!("./{}", name));
     if project.exists() && project.read_dir()?.count() > 0 {

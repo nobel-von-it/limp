@@ -28,4 +28,6 @@ pub enum LimpError {
     EmptyFile(String),
     #[error("Not supported: {0}")]
     NotSupported(String),
+    #[error("Dependency not found: {0}")]
+    DependencyNotFound(String),
 }
