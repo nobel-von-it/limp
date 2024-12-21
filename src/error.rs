@@ -18,6 +18,8 @@ pub enum LimpError {
     VersionNotFound(String),
     #[error("Snippet not found: {0}")]
     SnippetNotFound(String),
+    #[error("Snippet exists: {0}")]
+    SnippetExists(String),
     #[error("Incompatible features: {0}")]
     IncompatibleFeatures(String),
     #[error("Cannot add dependency: {0}")]

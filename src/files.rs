@@ -149,6 +149,16 @@ pub fn open<P: AsRef<Path>>(path: P) -> Result<File, LimpError> {
     Ok(file)
 }
 
+pub fn add_to_snippets_dir(name: &str, content: &str) -> Result<String, LimpError> {
+    let path = snippets_dir().join(format!("{name}.rs"));
+    if path.exists() {
+        return Err(LimpError::SnippetExists(name.to_string()));
+    }
+    let mut file = open(&path)?;
+    file.write_all(content.as_bytes())?;
+    Ok(path.display().to_string())
+}
+
 pub fn create_project(name: &str, deps: Option<&[JsonDependency]>) -> Result<(), LimpError> {
     let project = PathBuf::from(format!("./{}", name));
     if project.exists() && project.read_dir()?.count() > 0 {

@@ -1,8 +1,16 @@
-use std::{collections::HashMap, path::Path};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 
 use serde::{Deserialize, Serialize};
 
-use crate::{crates::CratesIoDependency, error::LimpError, files};
+use crate::{
+    crates::CratesIoDependency,
+    error::LimpError,
+    files::{self, add_to_snippets_dir},
+    parser::SnippetEntity,
+};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct JsonDependency {
@@ -56,9 +64,16 @@ impl JsonDependency {
     ) -> Result<Self, LimpError> {
         let crateiodep = CratesIoDependency::from_cratesio(name)?;
 
+        let mut result_path = None;
+
         if let Some(path) = path_to_snippet {
-            if !Path::new(path).exists() {
-                return Err(LimpError::SnippetNotFound(path.to_string()));
+            let path = PathBuf::from(path);
+            if !path.exists() {
+                return Err(LimpError::SnippetNotFound(path.display().to_string()));
+            }
+            let se = SnippetEntity::from_file(path)?;
+            if let Ok(p) = add_to_snippets_dir(name, se.to_string().as_str()) {
+                result_path = Some(p);
             }
         }
 
@@ -83,44 +98,13 @@ impl JsonDependency {
             }
         }
 
-        // if let Some(unwrapped_version) = version {
-        //     if let Some(finded_version) = crateiodep
-        //         .get_all_versions()
-        //         .iter()
-        //         .find(|v| v.num == unwrapped_version)
-        //     {
-        //         if let Some(unwrapped_features) = features {
-        //             if let Some(finded_features) = finded_version.get_features() {
-        //                 for f in unwrapped_features {
-        //                     if !finded_features.contains(&f) {
-        //                         return Err(LimpError::IncompatibleFeatures(format!(
-        //                             "{}/{}",
-        //                             name, unwrapped_version
-        //                         )));
-        //                     }
-        //                 }
-        //             } else {
-        //                 return Err(LimpError::IncompatibleFeatures(format!(
-        //                     "{}/{}",
-        //                     name, unwrapped_version
-        //                 )));
-        //             }
-        //         }
-        //     } else {
-        //         return Err(LimpError::VersionNotFound(format!(
-        //             "{}/{}",
-        //             name, unwrapped_version
-        //         )));
-        //     }
-        // }
-
         Ok(Self {
             name: name.to_string(),
             version: version
                 .unwrap_or(&crateiodep.get_version(0)?.num)
                 .to_string(),
             features: features.map(|f| f.to_vec()),
-            path_to_snippet: path_to_snippet.map(String::from),
+            path_to_snippet: result_path,
         })
     }
     pub fn update(&mut self) -> Result<(), LimpError> {
