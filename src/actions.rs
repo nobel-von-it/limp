@@ -24,6 +24,13 @@ pub enum Action {
     Add {
         name: String,
     },
+    Link {
+        name: String,
+        path_to_snippet: String,
+    },
+    Unlink {
+        name: String,
+    },
     Update,
     List,
 }
@@ -88,6 +95,17 @@ impl CommandHandler {
                     .about("Add dependency to existing project")
                     .arg(Arg::new("name").required(true)),
             )
+            .subcommand(
+                Command::new("link")
+                    .about("Link dependency to snippet")
+                    .arg(Arg::new("name").required(true))
+                    .arg(Arg::new("path_to_snippet").required(true)),
+            )
+            .subcommand(
+                Command::new("unlink")
+                    .about("Unlink dependency from snippet")
+                    .arg(Arg::new("name").required(true)),
+            )
             .subcommand(Command::new("list").about("List dependencies"))
             .subcommand(Command::new("update").about("Update dependencies"))
             .subcommand(Command::new("version").about("Print version"))
@@ -130,6 +148,16 @@ impl CommandHandler {
                         name: subargs.get_one::<String>("name").unwrap().clone(),
                     }),
                     "add" => Some(Action::Add {
+                        name: subargs.get_one::<String>("name").unwrap().clone(),
+                    }),
+                    "link" => Some(Action::Link {
+                        name: subargs.get_one::<String>("name").unwrap().clone(),
+                        path_to_snippet: subargs
+                            .get_one::<String>("path_to_snippet")
+                            .unwrap()
+                            .clone(),
+                    }),
+                    "unlink" => Some(Action::Unlink {
                         name: subargs.get_one::<String>("name").unwrap().clone(),
                     }),
                     "list" => Some(Action::List),
@@ -217,6 +245,27 @@ impl CommandHandler {
                             std::env::current_dir().unwrap().display()
                         )));
                     }
+                }
+                Action::Link {
+                    name,
+                    path_to_snippet,
+                } => {
+                    let mut js = JsonStorage::load(config_path())?;
+                    js.dependencies
+                        .get_mut(name)
+                        .ok_or(LimpError::DependencyNotFound(name.to_string()))?
+                        .path_to_snippet = Some(path_to_snippet.to_string());
+                    js.save(config_path())?;
+                    println!("Successfully linked {} to {}", name, path_to_snippet);
+                }
+                Action::Unlink { name } => {
+                    let mut js = JsonStorage::load(config_path())?;
+                    js.dependencies
+                        .get_mut(name)
+                        .ok_or(LimpError::DependencyNotFound(name.to_string()))?
+                        .path_to_snippet = None;
+                    js.save(config_path())?;
+                    println!("Successfully unlinked {}", name);
                 }
                 Action::List => {
                     let js = JsonStorage::load(config_path())?;
