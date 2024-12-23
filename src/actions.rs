@@ -269,10 +269,17 @@ impl CommandHandler {
                 }
                 Action::List => {
                     let js = JsonStorage::load(config_path())?;
-                    js.dependencies
-                        .iter()
-                        .enumerate()
-                        .for_each(|(i, (_, d))| println!("{}: {}", i + 1, d));
+                    js.dependencies.iter().enumerate().for_each(|(i, (_, d))| {
+                        println!("{} id:", i + 1);
+                        println!("  - {}", d.name);
+                        println!("  - {}", d.version);
+                        if let Some(f) = &d.features {
+                            println!("  - {}", f.join(", "));
+                        }
+                        if let Some(p) = &d.path_to_snippet {
+                            println!("  - {}", p);
+                        }
+                    });
                 }
                 Action::Update => {
                     let mut js = JsonStorage::load(config_path())?;

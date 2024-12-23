@@ -6,7 +6,7 @@ use crate::error::LimpError;
 pub struct CratesIoDependency {
     #[serde(rename = "crate")]
     pub crate_info: Crate,
-    versions: Vec<serde_json::Value>,
+    pub versions: Vec<serde_json::Value>,
 }
 impl CratesIoDependency {
     // TODO: rewrite to Result and use ?
@@ -63,7 +63,7 @@ pub struct Crate {
 pub struct Version {
     #[serde(rename = "crate")]
     pub crate_name: String,
-    features: Option<serde_json::Value>,
+    pub features: Option<serde_json::Value>,
     pub num: String,
 }
 impl Version {
