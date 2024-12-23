@@ -4,7 +4,10 @@ use clap::{Arg, ArgMatches, Command};
 
 use crate::{
     error::LimpError,
-    files::{config_path, create_project, find_toml, open, remove_from_snippets_dir},
+    files::{
+        add_to_snippets_dir, config_path, create_project, find_toml, open, remove_from_snippets_dir,
+    },
+    parser::SnippetEntity,
     storage::{JsonDependency, JsonStorage},
 };
 pub enum Action {
@@ -251,11 +254,17 @@ impl CommandHandler {
                     path_to_snippet,
                 } => {
                     let mut js = JsonStorage::load(config_path())?;
+
+                    let p = SnippetEntity::from_file(path_to_snippet)?;
+                    let path_to_snippet = add_to_snippets_dir(name, p.to_string().as_str())?;
+
                     js.dependencies
                         .get_mut(name)
                         .ok_or(LimpError::DependencyNotFound(name.to_string()))?
-                        .path_to_snippet = Some(path_to_snippet.to_string());
+                        .path_to_snippet = Some(path_to_snippet.clone());
+
                     js.save(config_path())?;
+
                     println!("Successfully linked {} to {}", name, path_to_snippet);
                 }
                 Action::Unlink { name } => {
@@ -264,7 +273,10 @@ impl CommandHandler {
                         .get_mut(name)
                         .ok_or(LimpError::DependencyNotFound(name.to_string()))?
                         .path_to_snippet = None;
+
+                    remove_from_snippets_dir(name)?;
                     js.save(config_path())?;
+
                     println!("Successfully unlinked {}", name);
                 }
                 Action::List => {
