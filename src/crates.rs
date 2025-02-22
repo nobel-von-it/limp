@@ -9,22 +9,10 @@ pub struct CratesIoDependency {
     pub versions: Vec<serde_json::Value>,
 }
 impl CratesIoDependency {
-    // TODO: rewrite to Result and use ?
-    // pub fn get_from_cratesio(name: &str) -> Option<Self> {
-    //     let url = format!("https://crates.io/api/v1/crates/{}", name);
-    //     if let Ok(res) = ureq::get(&url).set("User-Agent", "limp/0.1.6").call() {
-    //         if let Ok(body) = res.into_string() {
-    //             if let Ok(crate_info) = serde_json::from_str::<CratesIoDependency>(&body) {
-    //                 return Some(crate_info);
-    //             }
-    //         }
-    //     }
-    //     None
-    // }
     pub fn from_cratesio(name: &str) -> Result<Self, LimpError> {
         let url = format!("https://crates.io/api/v1/crates/{}", name);
         let res = ureq::get(&url)
-            .set("User-Agent", "limp/0.1.7")
+            .set("User-Agent", "limp/0.2.1")
             .call()
             .map_err(|e| LimpError::HttpError(Box::new(e)))?;
         let body = res.into_string()?;

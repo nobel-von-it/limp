@@ -7,8 +7,7 @@ use std::{
 
 use crate::{error::LimpError, parser::load_from_deps, storage::JsonDependency};
 
-const MAIN_SNIP: &str = r#"
-fn main() {
+const MAIN_SNIP: &str = r#"fn main() {
     println!("Hello, limp!");
 }"#;
 

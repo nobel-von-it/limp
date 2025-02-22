@@ -46,7 +46,7 @@ impl CommandHandler {
     pub fn build() -> Command {
         Command::new("limp")
             .about("Limp is a simple CLI tool for managing your rust projects.")
-            .version("v0.2.0")
+            .version("v0.2.1")
             .subcommand_required(true)
             .subcommand(
                 Command::new("init")
