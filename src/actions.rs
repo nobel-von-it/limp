@@ -338,14 +338,14 @@ impl CommandHandler {
                 Action::List => {
                     let js = JsonStorage::load(config_path())?;
                     js.dependencies.iter().enumerate().for_each(|(i, (_, d))| {
-                        println!("{} id:", i + 1);
-                        println!("  - {}", d.name);
-                        println!("  - {}", d.version);
+                        println!("I: {}", i + 1);
+                        println!("  - N: {}", d.name);
+                        println!("  - V: {}", d.version);
                         if let Some(f) = &d.features {
-                            println!("  - {}", f.join(", "));
+                            println!("  - F: {}", f.join(", "));
                         }
                         if let Some(p) = &d.path_to_snippet {
-                            println!("  - {}", p);
+                            println!("  - S: {}", p);
                         }
                     });
                 }
@@ -354,6 +354,7 @@ impl CommandHandler {
                     js.dependencies
                         .iter_mut()
                         .map(|(_, d)| d)
+                        // Using try_for_each to handle errors that might occur in updating dependencies
                         .try_for_each(|d| d.update())?;
                     js.save(config_path())?;
                     println!("Successfully updated all dependencies");
