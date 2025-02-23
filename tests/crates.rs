@@ -8,7 +8,6 @@ const CRATE_NAME: &str = "limp";
 const FULL_CRATE_NAME: &str = "tokio";
 const FEATURES: [&str; 4] = ["full", "net", "rt", "rt-multi-thread"];
 
-/// Test fetching crate metadata from crates.io.
 #[test]
 fn test_from_cratesio() {
     // Fetch the crate metadata
@@ -20,7 +19,6 @@ fn test_from_cratesio() {
     assert_eq!(dep.versions.len(), VERSION_LENGTH);
 }
 
-/// Test retrieving all versions of a crate.
 #[test]
 fn test_get_all_versions() {
     let crate_name = "limp";
@@ -37,7 +35,6 @@ fn test_get_all_versions() {
     assert_eq!(all_versions[0].num, LAST_VERSION);
 }
 
-/// Test retrieving a specific version of a crate.
 #[test]
 fn test_get_version() {
     // Fetch the crate metadata
@@ -51,7 +48,6 @@ fn test_get_version() {
     assert_eq!(version.crate_name, CRATE_NAME);
 }
 
-/// Test retrieving features for a specific version.
 #[test]
 fn test_get_features() {
     // Fetch the crate metadata
@@ -76,7 +72,6 @@ fn test_get_features() {
     }
 }
 
-/// Test error handling for invalid version ID.
 #[test]
 fn test_get_version_error() {
     // Fetch the crate metadata
