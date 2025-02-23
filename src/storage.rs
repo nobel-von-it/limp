@@ -18,6 +18,69 @@ use crate::{
     parser::SnippetEntity,
 };
 
+/// A trait defining the behavior for loading and saving dependency storage.
+pub trait Storage {
+    /// Loads the storage from a persistent source.
+    ///
+    /// # Returns
+    /// - `Ok(JsonStorage)` if the storage is successfully loaded.
+    /// - `Err(LimpError)` if an error occurs.
+    fn load(&self) -> Result<JsonStorage, LimpError>;
+
+    /// Saves the storage to a persistent source.
+    ///
+    /// # Arguments
+    /// * `storage` - The storage to save.
+    ///
+    /// # Returns
+    /// - `Ok(())` if the storage is successfully saved.
+    /// - `Err(LimpError)` if an error occurs.
+    fn save(&self, storage: &JsonStorage) -> Result<(), LimpError>;
+}
+
+/// A storage implementation that uses a file path to load and save dependencies.
+pub struct PathStorage {
+    /// The path to the file where dependencies are stored.
+    path: PathBuf,
+}
+
+impl PathStorage {
+    /// Creates a new `PathStorage` instance.
+    ///
+    /// # Arguments
+    /// * `path` - The path to the file where the storage is persisted.
+    ///
+    /// # Returns
+    /// A new `PathStorage` instance.
+    pub fn new<P: AsRef<Path>>(path: P) -> Self {
+        Self {
+            path: path.as_ref().to_path_buf(),
+        }
+    }
+}
+
+impl Storage for PathStorage {
+    /// Loads the storage from a file.
+    ///
+    /// Implements the `load` method from the `Storage` trait.
+    fn load(&self) -> Result<JsonStorage, LimpError> {
+        let file = files::open(&self.path)?;
+        Ok(serde_json::from_reader(file).unwrap_or(JsonStorage::default()))
+    }
+
+    /// Saves the storage to a file.
+    ///
+    /// Implements the `save` method from the `Storage` trait.
+    fn save(&self, storage: &JsonStorage) -> Result<(), LimpError> {
+        let file = files::open(&self.path)?;
+        // Clear the file before writing
+        // If append is used here, it will broke the file and save the wrong data
+        file.set_len(0)?;
+        serde_json::to_writer(file, storage)?;
+        Ok(())
+    }
+}
+
 /// Represents a dependency with its metadata.
 ///
 /// This struct stores information about a dependency, including its name, version,
@@ -167,7 +230,7 @@ impl JsonDependency {
 ///
 /// This struct manages a collection of `JsonDependency` objects and provides
 /// functionality for loading, saving, and manipulating dependencies.
-#[derive(Deserialize, Serialize, Debug, Default)]
+#[derive(Deserialize, Serialize, Debug, Default, Clone)]
 pub struct JsonStorage {
     /// A map of dependencies, keyed by their names.
     #[serde(default)]
@@ -203,8 +266,6 @@ impl JsonStorage {
     /// - `Err(LimpError)` if an error occurs.
     pub fn save<P: AsRef<Path>>(&self, path: P) -> Result<(), LimpError> {
         let file = files::open(path)?;
-        // Clear the file before writing
-        // If append is used here, it will broke the file and save wrong data
         file.set_len(0)?;
         serde_json::to_writer(file, self)?;
         Ok(())
@@ -214,12 +275,27 @@ impl JsonStorage {
     ///
     /// This function inserts a `JsonDependency` into the `dependencies` map.
     /// If a dependency with the same name already exists, it will be overwritten.
-    /// This is just wrapper for `insert()` function
     ///
     /// # Arguments
     /// * `dep` - The dependency to add.
-    pub fn add(&mut self, dep: JsonDependency) {
+    ///
+    /// # Returns
+    /// - `Ok(())` if the dependency is successfully added.
+    /// - `Err(LimpError)` if the dependency already exists or an error occurs.
+    pub fn add(&mut self, dep: JsonDependency) -> Result<(), LimpError> {
+        if self.dependencies.contains_key(&dep.name) {
+            return Err(LimpError::DependencyAlreadyExists(dep.name.clone()));
+        }
+
+        let _ = JsonDependency::new_full(
+            &dep.name,
+            Some(&dep.version),
+            dep.features.as_deref(),
+            dep.path_to_snippet.as_deref(),
+        )?;
+
         self.dependencies.insert(dep.name.clone(), dep);
+        Ok(())
     }
 
     /// Removes a dependency from the storage.
@@ -228,8 +304,17 @@ impl JsonStorage {
     ///
     /// # Arguments
     /// * `name` - The name of the dependency to remove.
-    pub fn remove(&mut self, name: &str) {
+    ///
+    /// # Returns
+    /// - `Ok(())` if the dependency is successfully removed.
+    /// - `Err(LimpError)` if the dependency does not exist.
+    pub fn remove(&mut self, name: &str) -> Result<(), LimpError> {
+        if !self.dependencies.contains_key(name) {
+            return Err(LimpError::DependencyNotFound(name.to_string()));
+        }
+
         self.dependencies.remove(name);
+        Ok(())
     }
 
     /// Retrieves a dependency by its name.
@@ -260,5 +345,23 @@ impl JsonStorage {
     /// - `None` if the dependency does not exist.
     pub fn get_mut(&mut self, name: &str) -> Option<&mut JsonDependency> {
         self.dependencies.get_mut(name)
+    }
+}
+
+pub struct JsonStorageManager<S: Storage> {
+    storage: S,
+}
+
+impl<S: Storage> JsonStorageManager<S> {
+    pub fn new(storage: S) -> Self {
+        Self { storage }
+    }
+
+    pub fn load(&self) -> Result<JsonStorage, LimpError> {
+        self.storage.load()
+    }
+
+    pub fn save(&self, storage: &JsonStorage) -> Result<(), LimpError> {
+        self.storage.save(storage)
     }
 }

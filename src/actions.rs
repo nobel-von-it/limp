@@ -13,7 +13,7 @@ use crate::{
         add_to_snippets_dir, config_path, create_project, find_toml, open, remove_from_snippets_dir,
     },
     parser::SnippetEntity,
-    storage::{JsonDependency, JsonStorage},
+    storage::{JsonDependency, JsonStorageManager, PathStorage},
 };
 
 /// Represents the actions that can be performed by the CLI.
@@ -232,7 +232,9 @@ impl CommandHandler {
         if let Some(act) = &self.action {
             match act {
                 Action::Init { name, dependencies } => {
-                    let js = JsonStorage::load(config_path())?;
+                    let manager = JsonStorageManager::new(PathStorage::new(config_path()));
+                    let js = manager.load()?;
+
                     let mut odeps = None;
                     if let Some(deps) = dependencies {
                         let mut result_deps = vec![];
@@ -256,7 +258,8 @@ impl CommandHandler {
                     features,
                     path_to_snippet,
                 } => {
-                    let mut js = JsonStorage::load(config_path())?;
+                    let manager = JsonStorageManager::new(PathStorage::new(config_path()));
+                    let mut js = manager.load()?;
 
                     let jd = JsonDependency::new_full(
                         name,
@@ -264,24 +267,27 @@ impl CommandHandler {
                         features.as_deref(),
                         path_to_snippet.as_deref(),
                     )?;
-                    js.add(jd);
+                    js.add(jd)?;
 
-                    js.save(config_path())?;
+                    manager.save(&js)?;
                     println!("Successfully added {}", name);
                 }
                 Action::Delete { name } => {
-                    let mut js = JsonStorage::load(config_path())?;
+                    let manager = JsonStorageManager::new(PathStorage::new(config_path()));
+                    let mut js = manager.load()?;
 
-                    js.remove(name);
+                    js.remove(name)?;
                     remove_from_snippets_dir(name)?;
 
-                    js.save(config_path())?;
+                    manager.save(&js)?;
                     println!("Successfully deleted {}", name);
                 }
                 Action::Add { name } => {
                     if let Some(path) = find_toml() {
                         let mut file = open(path)?;
-                        let js = JsonStorage::load(config_path())?;
+
+                        let manager = JsonStorageManager::new(PathStorage::new(config_path()));
+                        let js = manager.load()?;
 
                         let mut content = String::new();
                         file.read_to_string(&mut content)?;
@@ -309,7 +315,8 @@ impl CommandHandler {
                     name,
                     path_to_snippet,
                 } => {
-                    let mut js = JsonStorage::load(config_path())?;
+                    let manager = JsonStorageManager::new(PathStorage::new(config_path()));
+                    let mut js = manager.load()?;
 
                     let p = SnippetEntity::from_file(path_to_snippet)?;
                     let path_to_snippet = add_to_snippets_dir(name, p.to_string().as_str())?;
@@ -319,24 +326,25 @@ impl CommandHandler {
                         .ok_or(LimpError::DependencyNotFound(name.to_string()))?
                         .path_to_snippet = Some(path_to_snippet.clone());
 
-                    js.save(config_path())?;
-
+                    manager.save(&js)?;
                     println!("Successfully linked {} to {}", name, path_to_snippet);
                 }
                 Action::Unlink { name } => {
-                    let mut js = JsonStorage::load(config_path())?;
+                    let manager = JsonStorageManager::new(PathStorage::new(config_path()));
+                    let mut js = manager.load()?;
                     js.dependencies
                         .get_mut(name)
                         .ok_or(LimpError::DependencyNotFound(name.to_string()))?
                         .path_to_snippet = None;
 
                     remove_from_snippets_dir(name)?;
-                    js.save(config_path())?;
 
+                    manager.save(&js)?;
                     println!("Successfully unlinked {}", name);
                 }
                 Action::List => {
-                    let js = JsonStorage::load(config_path())?;
+                    let manager = JsonStorageManager::new(PathStorage::new(config_path()));
+                    let js = manager.load()?;
                     js.dependencies.iter().enumerate().for_each(|(i, (_, d))| {
                         println!("I: {}", i + 1);
                         println!("  - N: {}", d.name);
@@ -350,13 +358,16 @@ impl CommandHandler {
                     });
                 }
                 Action::Update => {
-                    let mut js = JsonStorage::load(config_path())?;
+                    let manager = JsonStorageManager::new(PathStorage::new(config_path()));
+                    let mut js = manager.load()?;
+
                     js.dependencies
                         .iter_mut()
                         .map(|(_, d)| d)
                         // Using try_for_each to handle errors that might occur in updating dependencies
                         .try_for_each(|d| d.update())?;
-                    js.save(config_path())?;
+
+                    manager.save(&js)?;
                     println!("Successfully updated all dependencies");
                 }
             }

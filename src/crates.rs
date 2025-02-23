@@ -44,7 +44,7 @@ impl CratesIoDependency {
     /// This function parses the `versions` field and returns a list of `Version` objects.
     ///
     /// # Returns
-    /// A `Vec<Version>` containing all versions of the crate.
+    /// A `Vec<Version>` containing all versions of the crate. The crate has at least one version.
     pub fn get_all_versions(&self) -> Vec<Version> {
         self.versions
             .iter()

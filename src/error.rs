@@ -83,4 +83,8 @@ pub enum LimpError {
     /// The specified dependency was not found.
     #[error("Dependency not found: {0}")]
     DependencyNotFound(String),
+
+    /// The specified dependency already exists.
+    #[error("Dependency already exists: {0}")]
+    DependencyAlreadyExists(String),
 }
