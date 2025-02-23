@@ -1,3 +1,9 @@
+//! # Limp Error Module
+//!
+//! This module provides custom error types for the `limp` tool.
+//! It defines the `LimpError` enum, which encapsulates all possible errors that can occur during the execution of `limp`.
+//!
+
 /// Represents errors that can occur in the `limp` tool.
 ///
 /// This enum encapsulates all possible errors that might arise during the execution of `limp`,
@@ -35,7 +41,7 @@ pub enum LimpError {
     ///
     /// This error is returned when an HTTP request fails,
     /// such as when fetching crate metadata from crates.io.
-    /// Box<T> is used to optimize memory usage in case of large errors.
+    /// `Box<T>` is used to optimize memory usage in case of large errors.
     #[error("HTTP error: {0}")]
     HttpError(#[from] Box<ureq::Error>),
 
