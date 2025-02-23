@@ -1,3 +1,8 @@
+//! # Command Handler Module
+//!
+//! This module provides functionality for handling CLI commands in the `limp` tool.
+//! It parses command-line arguments, maps them to specific actions, and executes those actions.
+
 use std::io::{Read, Write};
 
 use clap::{Arg, ArgMatches, Command};
@@ -10,39 +15,74 @@ use crate::{
     parser::SnippetEntity,
     storage::{JsonDependency, JsonStorage},
 };
+
+/// Represents the actions that can be performed by the CLI.
+///
+/// Each variant corresponds to a specific command (e.g., `init`, `new`, `delete`, etc.).
 pub enum Action {
+    /// Initialize a new project.
     Init {
+        /// The name of the project.
         name: String,
+        /// Optional dependencies to include in the project.
         dependencies: Option<Vec<String>>,
     },
+    /// Add a new dependency.
     NewDependency {
+        /// The name of the dependency.
         name: String,
+        /// The version of the dependency (optional).
         version: Option<String>,
+        /// Optional features to enable for the dependency.
         features: Option<Vec<String>>,
+        /// Path to a snippet associated with the dependency (optional).
         path_to_snippet: Option<String>,
     },
+    /// Delete a dependency.
     Delete {
+        /// The name of the dependency to delete.
         name: String,
     },
+    /// Add a dependency to an existing project.
     Add {
+        /// The name of the dependency to add.
         name: String,
     },
+    /// Link a dependency to a snippet.
     Link {
+        /// The name of the dependency.
         name: String,
+        /// The path to the snippet to link.
         path_to_snippet: String,
     },
+    /// Unlink a dependency from a snippet.
     Unlink {
+        /// The name of the dependency to unlink.
         name: String,
     },
+    /// Update all dependencies.
     Update,
+    /// List all dependencies.
     List,
 }
-
+/// Handles CLI commands and executes corresponding actions.
+///
+/// This struct is responsible for parsing CLI arguments and mapping them to specific actions
+/// (e.g., initializing a project, adding a dependency, etc.).
+///
+/// # Fields
+/// - `action`: An optional `Action` enum representing the command to execute.
 #[derive(Default)]
 pub struct CommandHandler {
     pub action: Option<Action>,
 }
 impl CommandHandler {
+    /// Builds the CLI command structure using `clap`.
+    ///
+    /// This function defines the CLI commands, arguments, and help messages.
+    ///
+    /// # Returns
+    /// A `clap::Command` object representing the CLI structure.
     pub fn build() -> Command {
         Command::new("limp")
             .about("Limp is a simple CLI tool for managing your rust projects.")
@@ -113,6 +153,15 @@ impl CommandHandler {
             .subcommand(Command::new("update").about("Update dependencies"))
             .subcommand(Command::new("version").about("Print version"))
     }
+    /// Parses CLI arguments and maps them to an `Action`.
+    ///
+    /// This function takes `ArgMatches` from `clap` and maps the subcommand to a specific `Action`.
+    ///
+    /// # Arguments
+    /// * `args` - The `ArgMatches` object containing parsed CLI arguments.
+    ///
+    /// # Returns
+    /// A `CommandHandler` instance with the `action` field set based on the parsed arguments.
     pub fn parse(args: &ArgMatches) -> Self {
         Self {
             action: match args.subcommand() {
@@ -167,11 +216,18 @@ impl CommandHandler {
                     "update" => Some(Action::Update),
                     _ => None,
                 },
-
                 None => None,
             },
         }
     }
+    /// Executes the action specified in the `CommandHandler`.
+    ///
+    /// This function performs the action (e.g., initializing a project, adding a dependency, etc.)
+    /// based on the `action` field.
+    ///
+    /// # Returns
+    /// - `Ok(())` if the action is executed successfully.
+    /// - `Err(LimpError)` if an error occurs during execution.
     pub fn make_action(&self) -> Result<(), LimpError> {
         if let Some(act) = &self.action {
             match act {
