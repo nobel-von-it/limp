@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     crates::CratesIoDependency,
-    error::LimpError,
+    error::{LimpError, Result},
     files::{self, add_to_snippets_dir},
     parser::SnippetEntity,
 };
@@ -25,7 +25,7 @@ pub trait Storage {
     /// # Returns
     /// - `Ok(JsonStorage)` if the storage is successfully loaded.
     /// - `Err(LimpError)` if an error occurs.
-    fn load(&self) -> Result<JsonStorage, LimpError>;
+    fn load(&self) -> Result<JsonStorage>;
 
     /// Saves the storage to a persistent source.
     ///
@@ -35,7 +35,7 @@ pub trait Storage {
     /// # Returns
     /// - `Ok(())` if the storage is successfully saved.
     /// - `Err(LimpError)` if an error occurs.
-    fn save(&self, storage: &JsonStorage) -> Result<(), LimpError>;
+    fn save(&self, storage: &JsonStorage) -> Result<()>;
 }
 
 /// A storage implementation that uses a file path to load and save dependencies.
@@ -63,7 +63,7 @@ impl Storage for PathStorage {
     /// Loads the storage from a file.
     ///
     /// Implements the `load` method from the `Storage` trait.
-    fn load(&self) -> Result<JsonStorage, LimpError> {
+    fn load(&self) -> Result<JsonStorage> {
         let file = files::open(&self.path)?;
         Ok(serde_json::from_reader(file).unwrap_or(JsonStorage::default()))
     }
@@ -71,7 +71,7 @@ impl Storage for PathStorage {
     /// Saves the storage to a file.
     ///
     /// Implements the `save` method from the `Storage` trait.
-    fn save(&self, storage: &JsonStorage) -> Result<(), LimpError> {
+    fn save(&self, storage: &JsonStorage) -> Result<()> {
         let file = files::open(&self.path)?;
         // Clear the file before writing
         // If append is used here, it will broke the file and save the wrong data
@@ -135,7 +135,7 @@ impl JsonDependency {
     /// # Returns
     /// - `Ok(JsonDependency)` if the crate is successfully fetched.
     /// - `Err(LimpError)` if the crate cannot be found or an error occurs.
-    pub fn new(name: &str) -> Result<Self, LimpError> {
+    pub fn new(name: &str) -> Result<Self> {
         let crateiodep = CratesIoDependency::from_cratesio(name)?;
         Ok(Self {
             name: name.to_string(),
@@ -164,7 +164,7 @@ impl JsonDependency {
         version: Option<&str>,
         features: Option<&[String]>,
         path_to_snippet: Option<&str>,
-    ) -> Result<Self, LimpError> {
+    ) -> Result<Self> {
         let crateiodep = CratesIoDependency::from_cratesio(name)?;
 
         let mut result_path = None;
@@ -219,7 +219,7 @@ impl JsonDependency {
     /// # Returns
     /// - `Ok(())` if the update is successful.
     /// - `Err(LimpError)` if the crate cannot be found or an error occurs.
-    pub fn update(&mut self) -> Result<(), LimpError> {
+    pub fn update(&mut self) -> Result<()> {
         let crateiodep = CratesIoDependency::from_cratesio(&self.name)?;
         self.version = crateiodep.get_version(0)?.num.clone();
         Ok(())
@@ -249,7 +249,7 @@ impl JsonStorage {
     /// # Returns
     /// - `Ok(JsonStorage)` if the file is successfully loaded.
     /// - `Err(LimpError)` if an error occurs.
-    pub fn load<P: AsRef<Path>>(path: P) -> Result<JsonStorage, LimpError> {
+    pub fn load<P: AsRef<Path>>(path: P) -> Result<JsonStorage> {
         let file = files::open(path)?;
         Ok(serde_json::from_reader(file).unwrap_or(JsonStorage::default()))
     }
@@ -264,7 +264,7 @@ impl JsonStorage {
     /// # Returns
     /// - `Ok(())` if the file is successfully saved.
     /// - `Err(LimpError)` if an error occurs.
-    pub fn save<P: AsRef<Path>>(&self, path: P) -> Result<(), LimpError> {
+    pub fn save<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         let file = files::open(path)?;
         file.set_len(0)?;
         serde_json::to_writer(file, self)?;
@@ -282,7 +282,7 @@ impl JsonStorage {
     /// # Returns
     /// - `Ok(())` if the dependency is successfully added.
     /// - `Err(LimpError)` if the dependency already exists or an error occurs.
-    pub fn add(&mut self, dep: JsonDependency) -> Result<(), LimpError> {
+    pub fn add(&mut self, dep: JsonDependency) -> Result<()> {
         if self.dependencies.contains_key(&dep.name) {
             return Err(LimpError::DependencyAlreadyExists(dep.name.clone()));
         }
@@ -308,7 +308,7 @@ impl JsonStorage {
     /// # Returns
     /// - `Ok(())` if the dependency is successfully removed.
     /// - `Err(LimpError)` if the dependency does not exist.
-    pub fn remove(&mut self, name: &str) -> Result<(), LimpError> {
+    pub fn remove(&mut self, name: &str) -> Result<()> {
         if !self.dependencies.contains_key(name) {
             return Err(LimpError::DependencyNotFound(name.to_string()));
         }
@@ -357,11 +357,11 @@ impl<S: Storage> JsonStorageManager<S> {
         Self { storage }
     }
 
-    pub fn load(&self) -> Result<JsonStorage, LimpError> {
+    pub fn load(&self) -> Result<JsonStorage> {
         self.storage.load()
     }
 
-    pub fn save(&self, storage: &JsonStorage) -> Result<(), LimpError> {
+    pub fn save(&self, storage: &JsonStorage) -> Result<()> {
         self.storage.save(storage)
     }
 }

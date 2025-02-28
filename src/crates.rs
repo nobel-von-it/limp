@@ -5,7 +5,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::error::LimpError;
+use crate::error::{LimpError, Result};
 
 /// Represents a crate and its versions fetched from crates.io.
 ///
@@ -29,7 +29,7 @@ impl CratesIoDependency {
     /// # Returns
     /// - `Ok(CratesIoDependency)` if the request is successful.
     /// - `Err(LimpError)` if the request fails or the response cannot be parsed.
-    pub fn from_cratesio(name: &str) -> Result<Self, LimpError> {
+    pub fn from_cratesio(name: &str) -> Result<Self> {
         let url = format!("https://crates.io/api/v1/crates/{}", name);
         let res = ureq::get(&url)
             .set("User-Agent", "limp/0.2.1")
@@ -75,7 +75,7 @@ impl CratesIoDependency {
     /// # Returns
     /// - `Ok(Version)` if the version exists.
     /// - `Err(LimpError)` if the version ID is invalid.
-    pub fn get_version(&self, id: u64) -> Result<Version, LimpError> {
+    pub fn get_version(&self, id: u64) -> Result<Version> {
         if let Some(value) = self.versions.get(id as usize) {
             let version = serde_json::from_value(value.clone())?;
             return Ok(version);

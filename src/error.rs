@@ -4,6 +4,9 @@
 //! It defines the `LimpError` enum, which encapsulates all possible errors that can occur during the execution of `limp`.
 //!
 
+/// Alias for the `Result` type with the `LimpError` error type.
+pub type Result<T> = std::result::Result<T, LimpError>;
+
 /// Represents errors that can occur in the `limp` tool.
 ///
 /// This enum encapsulates all possible errors that might arise during the execution of `limp`,

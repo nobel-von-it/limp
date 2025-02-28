@@ -8,7 +8,7 @@ use std::io::{Read, Write};
 use clap::{Arg, ArgMatches, Command};
 
 use crate::{
-    error::LimpError,
+    error::{LimpError, Result},
     files::{
         add_to_snippets_dir, config_path, create_project, find_toml, open, remove_from_snippets_dir,
     },
@@ -228,7 +228,7 @@ impl CommandHandler {
     /// # Returns
     /// - `Ok(())` if the action is executed successfully.
     /// - `Err(LimpError)` if an error occurs during execution.
-    pub fn make_action(&self) -> Result<(), LimpError> {
+    pub fn make_action(&self) -> Result<()> {
         if let Some(act) = &self.action {
             match act {
                 Action::Init { name, dependencies } => {

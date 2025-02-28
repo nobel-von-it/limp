@@ -6,7 +6,11 @@
 
 use std::path::Path;
 
-use crate::{error::LimpError, files::open, storage::JsonDependency};
+use crate::{
+    error::{LimpError, Result},
+    files::open,
+    storage::JsonDependency,
+};
 
 /// Represents a code snippet parsed from a Rust file.
 ///
@@ -32,7 +36,7 @@ impl SnippetEntity {
     /// # Returns
     /// - `Ok(SnippetEntity)` if the file is successfully parsed.
     /// - `Err(LimpError)` if the file is not a Rust file or cannot be read.
-    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, LimpError> {
+    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
         use std::io::{BufRead, BufReader};
         let path = path.as_ref();
 

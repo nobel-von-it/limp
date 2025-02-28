@@ -10,7 +10,11 @@ use std::{
     process::Stdio,
 };
 
-use crate::{error::LimpError, parser::load_from_deps, storage::JsonDependency};
+use crate::{
+    error::{LimpError, Result},
+    parser::load_from_deps,
+    storage::JsonDependency,
+};
 
 /// Default main snippet for new projects.
 ///
@@ -111,7 +115,7 @@ pub fn find_toml() -> Option<PathBuf> {
 /// # Returns
 /// - `Ok(File)` if the file is successfully opened.
 /// - `Err(LimpError)` if an error occurs.
-pub fn open<P: AsRef<Path>>(path: P) -> Result<File, LimpError> {
+pub fn open<P: AsRef<Path>>(path: P) -> Result<File> {
     let path = path.as_ref();
     // Create parent directories if they don't exist
     fs::create_dir_all(path.parent().unwrap_or(Path::new("./")))?;
@@ -135,7 +139,7 @@ pub fn open<P: AsRef<Path>>(path: P) -> Result<File, LimpError> {
 /// # Returns
 /// - `Ok(String)` with the path to the snippet file if successful.
 /// - `Err(LimpError)` if the snippet already exists or an error occurs.
-pub fn add_to_snippets_dir(name: &str, content: &str) -> Result<String, LimpError> {
+pub fn add_to_snippets_dir(name: &str, content: &str) -> Result<String> {
     let path = snippets_dir().join(format!("{name}.rs"));
     if path.exists() {
         return Err(LimpError::SnippetExists(name.to_string()));
@@ -156,7 +160,7 @@ pub fn add_to_snippets_dir(name: &str, content: &str) -> Result<String, LimpErro
 /// # Returns
 /// - `Ok(())` if the snippet is removed or does not exist.
 /// - `Err(LimpError)` if an error occurs.
-pub fn remove_from_snippets_dir(name: &str) -> Result<(), LimpError> {
+pub fn remove_from_snippets_dir(name: &str) -> Result<()> {
     let path = snippets_dir().join(format!("{name}.rs"));
     if !path.exists() {
         // This means the snippet doesn't provided by the user and nothing to remove
@@ -178,7 +182,7 @@ pub fn remove_from_snippets_dir(name: &str) -> Result<(), LimpError> {
 /// # Returns
 /// - `Ok(())` if the project is created successfully.
 /// - `Err(LimpError)` if the project already exists or an error occurs.
-pub fn create_project(name: &str, deps: Option<&[JsonDependency]>) -> Result<(), LimpError> {
+pub fn create_project(name: &str, deps: Option<&[JsonDependency]>) -> Result<()> {
     let project = PathBuf::from(format!("./{}", name));
     // Check if the project already exists or is not empty
     if project.exists() && project.read_dir()?.count() > 0 {
