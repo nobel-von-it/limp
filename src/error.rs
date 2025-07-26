@@ -45,3 +45,19 @@ pub enum LimpError {
     #[error("Dependency not found: {0}")]
     DependencyNotFound(String),
 }
+
+#[derive(thiserror::Error, Debug)]
+pub enum ProjectTypeError {
+    #[error("Provided bin and lib: cannot initialize project")]
+    BothSpecified,
+    #[error("Provided nothing: cannot initialize project")]
+    NeitherSpecified,
+    #[error("Provided invalid project type: {0}")]
+    InvalidType(String),
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum CompilerEditionError {
+    #[error("Provided imvalid compiler edition: {0}")]
+    InvalidEdition(String),
+}
