@@ -8,12 +8,62 @@ use crate::{
     project::{CompilerEdition, ProjectType},
 };
 
-pub trait ClapCommandParser: Sized {
+pub trait ClapCommandProvider {
     fn command(am: &ArgManager) -> Command;
+}
+
+pub trait ClapCommandParser: Sized {
     // TODO: rewrite to LimpRestlt<Self>
     fn from_matches(args: &ArgMatches) -> Option<Self> {
         let _ = args;
         None
+    }
+}
+
+#[derive(Debug)]
+pub struct MainApplication {
+    limp_command: LimpCommand,
+    config: LimpConfig,
+}
+
+impl ClapCommandProvider for MainApplication {
+    fn command(am: &ArgManager) -> Command {
+        Command::new("limp")
+            .version("1.0")
+            .author("Your Name")
+            .about("Rust dependency management tool")
+            .subcommand_required(true)
+            .arg(am.flag_short_bool("verbose", false, "Verbose output", 'v', false))
+            .arg(am.flag_short_bool("quiet", false, "Quiet mode", 'q', false))
+            .subcommand(InitCommand::command(am))
+            .subcommand(NewCommand::command(am))
+            .subcommand(AddCommand::command(am))
+            .subcommand(
+                Command::new("storage")
+                    .about("Storage related commands")
+                    .subcommand_required(true)
+                    .subcommand(StorageAddCommand::command(am)),
+            )
+    }
+}
+impl ClapCommandParser for MainApplication {
+    fn from_matches(args: &ArgMatches) -> Option<Self> {
+        let limp_command = LimpCommand::from_matches(args)?;
+        let config = LimpConfig::new(*args.get_one("verbose")?, *args.get_one("quiet")?);
+
+        Some(Self {
+            limp_command,
+            config,
+        })
+    }
+}
+
+impl MainApplication {
+    pub fn get_command(&self) -> &LimpCommand {
+        &self.limp_command
+    }
+    pub fn get_config(&self) -> &LimpConfig {
+        &self.config
     }
 }
 
@@ -25,8 +75,8 @@ pub enum LimpCommand {
     StorageAdd(StorageAddCommand),
 }
 
-impl LimpCommand {
-    pub fn parse(args: &ArgMatches) -> Option<Self> {
+impl ClapCommandParser for LimpCommand {
+    fn from_matches(args: &ArgMatches) -> Option<Self> {
         if let Some((subname, subargs)) = args.subcommand() {
             return match subname {
                 "init" => Some(LimpCommand::Init(InitCommand::from_matches(subargs)?)),
@@ -53,12 +103,12 @@ impl LimpCommand {
 }
 
 #[derive(Debug, Default)]
-pub struct DefaultConfig {
+pub struct LimpConfig {
     verbose: bool,
     quiet: bool,
 }
 
-impl DefaultConfig {
+impl LimpConfig {
     pub fn new(verbose: bool, quiet: bool) -> Self {
         Self { verbose, quiet }
     }
@@ -74,10 +124,9 @@ pub struct InitCommand {
     project_type: ProjectType,
     edition: CompilerEdition,
     name: String,
-    config: DefaultConfig,
 }
 
-impl ClapCommandParser for InitCommand {
+impl ClapCommandProvider for InitCommand {
     fn command(am: &ArgManager) -> Command {
         Command::new("init")
             .about("Initialize existing project")
@@ -98,9 +147,9 @@ impl ClapCommandParser for InitCommand {
                 'e',
                 "2024",
             ))
-            .arg(am.flag_short_bool("verbose", false, "Verbose output", 'v', false))
-            .arg(am.flag_short_bool("quiet", false, "Quiet mode", 'q', false))
     }
+}
+impl ClapCommandParser for InitCommand {
     fn from_matches(args: &ArgMatches) -> Option<Self> {
         // String and &str -> ok
         // &String and &str -> bruh
@@ -116,8 +165,8 @@ impl ClapCommandParser for InitCommand {
             .clone();
 
         let project_type = ProjectType::try_from((
-            *args.get_one("lib").unwrap(),
-            *args.get_one("bin").unwrap(),
+            *args.get_one("lib")?,
+            *args.get_one("bin")?,
             args.get_one::<String>("project-type"),
         ))
         .ok()?;
@@ -129,16 +178,10 @@ impl ClapCommandParser for InitCommand {
         )
         .ok()?;
 
-        let config = DefaultConfig::new(
-            *args.get_one("verbose").unwrap(),
-            *args.get_one("quiet").unwrap(),
-        );
-
         Some(Self {
             project_type,
             edition,
             name,
-            config,
         })
     }
 }
@@ -148,10 +191,9 @@ pub struct NewCommand {
     project_type: ProjectType,
     edition: CompilerEdition,
     name: String,
-    config: DefaultConfig,
 }
 
-impl ClapCommandParser for NewCommand {
+impl ClapCommandProvider for NewCommand {
     fn command(am: &ArgManager) -> Command {
         Command::new("new")
             .about("Create new project")
@@ -164,9 +206,9 @@ impl ClapCommandParser for NewCommand {
                 'e',
                 "2024",
             ))
-            .arg(am.flag_short_bool("verbose", false, "Verbose output", 'v', false))
-            .arg(am.flag_short_bool("quiet", false, "Quiet mode", 'q', false))
     }
+}
+impl ClapCommandParser for NewCommand {
     fn from_matches(args: &ArgMatches) -> Option<Self> {
         let name = args
             .get_one::<String>("name")
@@ -195,16 +237,10 @@ impl ClapCommandParser for NewCommand {
         )
         .unwrap();
 
-        let config = DefaultConfig::new(
-            *args.get_one("verbose").unwrap(),
-            *args.get_one("quiet").unwrap(),
-        );
-
         Some(Self {
             project_type,
             edition,
             name,
-            config,
         })
     }
 }
@@ -215,15 +251,9 @@ pub struct AddCommandData {
     dependency_name: DependencyName,
     dependency_features: DependencyFeatures,
     target_platform: String,
-    config: DefaultConfig,
 }
 
-#[derive(Debug)]
-pub struct AddCommand {
-    data: AddCommandData,
-}
-
-impl ClapCommandParser for AddCommand {
+impl ClapCommandProvider for AddCommandData {
     fn command(am: &ArgManager) -> Command {
         Command::new("add")
             .about("Add dependency to project")
@@ -247,10 +277,23 @@ impl ClapCommandParser for AddCommand {
                 false,
             ))
             .arg(am.flag_long("target", false, "Target platform"))
-            .arg(am.flag_short_bool("verbose", false, "Verbose output", 'v', false))
-            .arg(am.flag_short_bool("quiet", false, "Quiet mode", 'q', false))
     }
 }
+
+impl ClapCommandParser for AddCommandData {}
+
+#[derive(Debug)]
+pub struct AddCommand {
+    data: AddCommandData,
+}
+
+impl ClapCommandProvider for AddCommand {
+    fn command(am: &ArgManager) -> Command {
+        AddCommandData::command(am)
+    }
+}
+
+impl ClapCommandParser for AddCommand {}
 
 #[derive(Debug)]
 pub struct StorageAddCommand {
@@ -258,38 +301,23 @@ pub struct StorageAddCommand {
     storage_config: StorageConfig,
 }
 
-impl ClapCommandParser for StorageAddCommand {
+impl ClapCommandProvider for StorageAddCommand {
     fn command(am: &ArgManager) -> Command {
-        AddCommand::command(am).arg(am.flag_long("storage", true, "Path to storage"))
+        AddCommandData::command(am).arg(am.flag_long("storage", true, "Path to storage"))
     }
 }
 
-pub fn command() -> Command {
-    let am = ArgManager;
-
-    Command::new("limp")
-        .version("1.0")
-        .author("Your Name")
-        .about("Rust dependency management tool")
-        .subcommand_required(true)
-        .arg(am.flag_short_bool("verbose", false, "Verbose output", 'v', false))
-        .arg(am.flag_short_bool("quiet", false, "Quiet mode", 'q', false))
-        .subcommand(InitCommand::command(&am))
-        .subcommand(NewCommand::command(&am))
-        .subcommand(AddCommand::command(&am))
-        .subcommand(
-            Command::new("storage")
-                .about("Storage related commands")
-                .subcommand_required(true)
-                .subcommand(StorageAddCommand::command(&am)),
-        )
-}
+impl ClapCommandParser for StorageAddCommand {}
 
 #[cfg(test)]
 mod test {
     mod init_command {
         use crate::{
-            command::{command, DefaultConfig, InitCommand, LimpCommand},
+            arg::ArgManager,
+            command::{
+                ClapCommandParser, ClapCommandProvider, InitCommand, LimpCommand, LimpConfig,
+                MainApplication,
+            },
             project::{CompilerEdition, ProjectType},
         };
 
@@ -298,33 +326,31 @@ mod test {
             sname: &str,
             sproject_type: ProjectType,
             sedition: CompilerEdition,
-            sconfig: DefaultConfig,
         ) {
-            let args = command().get_matches_from(args);
-            let limp_command = LimpCommand::parse(&args);
-            assert!(limp_command.is_some());
-            let limp_command = limp_command.unwrap();
+            let am = &ArgManager;
+            let args = MainApplication::command(am).get_matches_from(args);
+            let app = MainApplication::from_matches(&args);
+            assert!(app.is_some());
+            let app = app.unwrap();
 
-            assert!(matches!(limp_command, LimpCommand::Init(_)));
+            assert!(matches!(app.limp_command, LimpCommand::Init(_)));
 
             if let LimpCommand::Init(InitCommand {
                 project_type,
                 edition,
                 name,
-                config,
-            }) = limp_command
+            }) = app.limp_command
             {
                 assert_eq!(sname, name);
-                assert_eq!(sconfig.verbose, config.verbose);
-                assert_eq!(sconfig.quiet, config.quiet);
                 assert_eq!(sproject_type, project_type);
                 assert_eq!(sedition, edition);
             }
         }
         fn initialize_init_parse_helper_none(args: &[&str]) {
-            let args = command().get_matches_from(args);
-            let limp_command = LimpCommand::parse(&args);
-            assert!(limp_command.is_none());
+            let am = &ArgManager;
+            let args = MainApplication::command(am).get_matches_from(args);
+            let app = MainApplication::from_matches(&args);
+            assert!(app.is_none());
         }
 
         #[test]
@@ -334,7 +360,6 @@ mod test {
                 "limp",
                 ProjectType::Bin,
                 CompilerEdition::E2024,
-                DefaultConfig::default(),
             );
         }
 
@@ -346,7 +371,6 @@ mod test {
                 name,
                 ProjectType::Bin,
                 CompilerEdition::E2024,
-                DefaultConfig::default(),
             );
         }
 
@@ -354,14 +378,10 @@ mod test {
         fn initialize_init_parse_all_valuess_test() {
             let name = "blubli2";
             initialize_init_parse_helper_some(
-                &["limp", "init", "-vql", "-e", "15", name],
+                &["limp", "init", "-l", "-e", "15", name],
                 name,
                 ProjectType::Lib,
                 CompilerEdition::E2015,
-                DefaultConfig {
-                    verbose: true,
-                    quiet: true,
-                },
             );
         }
 
@@ -385,7 +405,10 @@ mod test {
     }
     mod new_command {
         use crate::{
-            command::{command, DefaultConfig, LimpCommand, NewCommand},
+            arg::ArgManager,
+            command::{
+                ClapCommandParser, ClapCommandProvider, LimpCommand, MainApplication, NewCommand,
+            },
             project::{CompilerEdition, ProjectType},
         };
 
@@ -394,33 +417,45 @@ mod test {
             sname: &str,
             sproject_type: ProjectType,
             sedition: CompilerEdition,
-            sconfig: DefaultConfig,
         ) {
-            let args = command().get_matches_from(args);
-            let limp_command = LimpCommand::parse(&args);
-            assert!(limp_command.is_some());
-            let limp_command = limp_command.unwrap();
+            let am = &ArgManager;
+            let args = MainApplication::command(am).get_matches_from(args);
+            let app = MainApplication::from_matches(&args);
+            assert!(app.is_some());
+            let app = app.unwrap();
 
-            assert!(matches!(limp_command, LimpCommand::New(_)));
+            assert!(matches!(app.limp_command, LimpCommand::New(_)));
 
             if let LimpCommand::New(NewCommand {
                 project_type,
                 edition,
                 name,
-                config,
-            }) = limp_command
+            }) = app.limp_command
             {
                 assert_eq!(sname, name);
-                assert_eq!(sconfig.verbose, config.verbose);
-                assert_eq!(sconfig.quiet, config.quiet);
                 assert_eq!(sproject_type, project_type);
                 assert_eq!(sedition, edition);
             }
         }
         fn initialize_new_parse_helper_none(args: &[&str]) {
-            let args = command().get_matches_from(args);
-            let limp_command = LimpCommand::parse(&args);
-            assert!(limp_command.is_none());
+            let am = &ArgManager;
+            let args = MainApplication::command(am).get_matches_from(args);
+            let app = MainApplication::from_matches(&args);
+            assert!(app.is_none());
+        }
+        #[test]
+        fn initialize_new_parse_name_test() {
+            let name = "blubli";
+            initialize_new_parse_helper_some(
+                &["limp", "new", name],
+                name,
+                ProjectType::Bin,
+                CompilerEdition::E2024,
+            );
+        }
+        #[test]
+        fn initialize_new_parse_without_name_test() {
+            initialize_new_parse_helper_none(&["limp", "new"]);
         }
     }
 }

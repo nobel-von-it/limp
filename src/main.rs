@@ -4,10 +4,14 @@ pub mod dependency;
 pub mod error;
 pub mod project;
 
-use command::{command, LimpCommand};
+use crate::{
+    arg::ArgManager,
+    command::{ClapCommandParser, ClapCommandProvider, MainApplication},
+};
 
 fn main() {
-    let args = command().get_matches();
-    let limp_command = LimpCommand::parse(&args).unwrap();
-    println!("{:#?}", limp_command)
+    let am = &ArgManager;
+    let args = MainApplication::command(am).get_matches();
+    let app = MainApplication::from_matches(&args).unwrap();
+    println!("{:#?}", app)
 }
