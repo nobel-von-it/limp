@@ -1,11 +1,15 @@
 [package]
-name = "limp"
+name = "limp-main"
 description = "effortless project initialization and dependency management"
 license = "MIT"
 authors = ["Nobel von it"]
 repository = "https://github.com/nobel-von-it/limp"
 version = "0.2.1"
 edition = "2021"
+
+[[bin]]
+name = "limp"
+path = "src/main.rs"
 
 [dependencies]
 ureq = "2.10.1"
@@ -14,3 +18,5 @@ serde_json = "1.0.128"
 clap = "4.5.23"
 thiserror = "2.0.8"
 
+[dev-dependencies]
+tempdir = "0.3.7"

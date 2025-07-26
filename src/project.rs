@@ -1,6 +1,6 @@
 use crate::error::{CompilerEditionError, ProjectTypeError};
 
-#[derive(Default)]
+#[derive(Default, Debug, PartialEq, Eq)]
 pub enum CompilerEdition {
     E2015,
     E2018,
@@ -22,7 +22,7 @@ impl TryFrom<&str> for CompilerEdition {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug, PartialEq, Eq)]
 pub enum ProjectType {
     #[default]
     Bin,
@@ -50,10 +50,8 @@ impl TryFrom<(bool, bool, Option<&String>)> for ProjectType {
 
         if lib {
             Ok(ProjectType::Lib)
-        } else if bin {
-            Ok(ProjectType::Bin)
         } else {
-            Err(ProjectTypeError::NeitherSpecified)
+            Ok(ProjectType::Bin)
         }
     }
 }

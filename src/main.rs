@@ -1,14 +1,13 @@
-mod arg;
-mod command;
-mod dependency;
-mod error;
-mod project;
+pub mod arg;
+pub mod command;
+pub mod dependency;
+pub mod error;
+pub mod project;
+
+use command::{command, LimpCommand};
 
 fn main() {
-    let matches = CommandHandler::build().get_matches();
-    let ch = CommandHandler::parse(&matches);
-    if let Err(e) = ch.make_action() {
-        eprintln!("ERROR: {e}");
-        std::process::exit(1);
-    }
+    let args = command().get_matches();
+    let limp_command = LimpCommand::parse(&args).unwrap();
+    println!("{:#?}", limp_command)
 }

@@ -1,17 +1,18 @@
-#[derive(Default)]
-pub enum RustDependencyType {
+#[derive(Default, Debug)]
+pub enum DependencyType {
     Dev,
     Build,
     #[default]
     Release,
 }
 
-pub struct RustDependencyFeatures {
+#[derive(Debug)]
+pub struct DependencyFeatures {
     default_features: bool,
     custom_features: Option<String>,
 }
 
-impl Default for RustDependencyFeatures {
+impl Default for DependencyFeatures {
     fn default() -> Self {
         Self {
             default_features: true,
@@ -21,12 +22,14 @@ impl Default for RustDependencyFeatures {
 }
 
 // name or name@version
-pub struct RustDependencyName {
+#[derive(Debug)]
+pub struct DependencyName {
     name: String,
-    version: RustDependencyVersion,
+    version: DependencyVersion,
 }
 
-pub enum RustDependencyVersion {
+#[derive(Debug)]
+pub enum DependencyVersion {
     Latest,
     Custom {
         release: u32,
