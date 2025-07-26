@@ -198,7 +198,15 @@ impl ClapCommandProvider for NewCommand {
         Command::new("new")
             .about("Create new project")
             .arg(am.base("name", true, "Project name"))
-            .arg(am.flag_long_val("type", false, "Project type (bin, lib)", "bin"))
+            .arg(am.flag_short_bool(
+                "bin",
+                false,
+                "Set project type to binary (default)",
+                'b',
+                false,
+            ))
+            .arg(am.flag_short_bool("lib", false, "Set project type to lib", 'l', false))
+            .arg(am.flag_long("type", false, "Project type (bin, lib)"))
             .arg(am.flag_short_val(
                 "edition",
                 false,
@@ -215,17 +223,15 @@ impl ClapCommandParser for NewCommand {
             .unwrap_or(
                 &std::env::current_dir()
                     .unwrap()
-                    .file_name()
-                    .unwrap()
-                    .to_str()
-                    .unwrap()
+                    .file_name()?
+                    .to_str()?
                     .to_string(),
             )
             .clone();
 
         let project_type = ProjectType::try_from((
-            *args.get_one("bin").unwrap(),
-            *args.get_one("lib").unwrap(),
+            *args.get_one("lib")?,
+            *args.get_one("bin")?,
             args.get_one::<String>("type"),
         ))
         .unwrap();
@@ -453,9 +459,20 @@ mod test {
                 CompilerEdition::E2024,
             );
         }
+
         #[test]
-        fn initialize_new_parse_without_name_test() {
-            initialize_new_parse_helper_none(&["limp", "new"]);
+        fn initialize_new_parse_all_values_test() {
+            let name = "blubli_new";
+            initialize_new_parse_helper_some(
+                &["limp", "new", "-l", "-e", "21", name],
+                name,
+                ProjectType::Lib,
+                CompilerEdition::E2021,
+            );
         }
+        // #[test]
+        // fn initialize_new_parse_without_name_test() {
+        //     initialize_new_parse_helper_none(&["limp", "new", " "]);
+        // }
     }
 }
