@@ -13,5 +13,5 @@ fn main() {
     let am = &ArgManager;
     let args = MainApplication::command(am).get_matches();
     let app = MainApplication::from_matches(&args).unwrap();
-    println!("{:#?}", app)
+    println!("{app:#?}")
 }

@@ -37,3 +37,22 @@ pub enum DependencyVersion {
         minor: u32,
     },
 }
+
+// I dont know how to create scalable etc.
+// TODO: think about dependency architecture
+
+#[derive(Debug)]
+pub struct Dependency {
+    name: DependencyName,
+    features: DependencyFeatures,
+
+    dependency_type: DependencyType,
+}
+
+// comma separated names without any field
+pub struct InputDependencies(String);
+
+// TODO: from input with storage and cratesio intgration
+pub struct OutputDependencies {
+    items: Vec<Dependency>,
+}

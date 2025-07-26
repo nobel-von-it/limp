@@ -121,9 +121,10 @@ pub struct StorageConfig {
 
 #[derive(Debug)]
 pub struct InitCommand {
+    name: String,
+
     project_type: ProjectType,
     edition: CompilerEdition,
-    name: String,
 }
 
 impl ClapCommandProvider for InitCommand {
@@ -188,9 +189,10 @@ impl ClapCommandParser for InitCommand {
 
 #[derive(Debug)]
 pub struct NewCommand {
+    name: String,
+
     project_type: ProjectType,
     edition: CompilerEdition,
-    name: String,
 }
 
 impl ClapCommandProvider for NewCommand {
