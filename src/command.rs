@@ -206,7 +206,7 @@ impl ClapCommandProvider for NewCommand {
                 false,
             ))
             .arg(am.flag_short_bool("lib", false, "Set project type to lib", 'l', false))
-            .arg(am.flag_long("type", false, "Project type (bin, lib)"))
+            .arg(am.flag_long("project-type", false, "Project type (bin, lib)"))
             .arg(am.flag_short_val(
                 "edition",
                 false,
@@ -232,16 +232,16 @@ impl ClapCommandParser for NewCommand {
         let project_type = ProjectType::try_from((
             *args.get_one("lib")?,
             *args.get_one("bin")?,
-            args.get_one::<String>("type"),
+            args.get_one::<String>("project-type"),
         ))
-        .unwrap();
+        .ok()?;
 
         let edition = CompilerEdition::try_from(
             args.get_one::<String>("edition")
                 .map(|s| s.as_str())
                 .unwrap_or("2024"),
         )
-        .unwrap();
+        .ok()?;
 
         Some(Self {
             project_type,
@@ -470,9 +470,37 @@ mod test {
                 CompilerEdition::E2021,
             );
         }
-        // #[test]
-        // fn initialize_new_parse_without_name_test() {
-        //     initialize_new_parse_helper_none(&["limp", "new", " "]);
-        // }
+        #[test]
+        fn initialize_new_parse_invalid_edition_test() {
+            let name = "blubli";
+            initialize_new_parse_helper_none(&["limp", "new", "-e", "bruh", name]);
+            initialize_new_parse_helper_none(&["limp", "new", "-e", "1231", name]);
+            initialize_new_parse_helper_none(&["limp", "new", "-e", "2014", name]);
+        }
+        #[test]
+        fn initialize_new_parse_invalid_project_type_test() {
+            let name = "blubli";
+            initialize_new_parse_helper_none(&["limp", "new", "-lb", name]);
+            initialize_new_parse_helper_none(&["limp", "new", "-l", "--project-type", "bin", name]);
+            initialize_new_parse_helper_none(&["limp", "new", "-b", "--project-type", "lib", name]);
+            initialize_new_parse_helper_none(&[
+                "limp",
+                "new",
+                "--project-type",
+                "sdlkjfslkdfj",
+                name,
+            ]);
+            initialize_new_parse_helper_none(&["limp", "new", "--project-type", "12", name]);
+            initialize_new_parse_helper_none(&["limp", "new", "-b", "--project-type", "sdf", name]);
+            initialize_new_parse_helper_none(&["limp", "new", "-l", "--project-type", "sdf", name]);
+            initialize_new_parse_helper_none(&[
+                "limp",
+                "new",
+                "-lb",
+                "--project-type",
+                "sdf",
+                name,
+            ]);
+        }
     }
 }
