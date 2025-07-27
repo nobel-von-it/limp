@@ -61,3 +61,41 @@ pub enum CompilerEditionError {
     #[error("Provided imvalid compiler edition: {0}")]
     InvalidEdition(String),
 }
+
+#[derive(thiserror::Error, Debug)]
+pub enum DependencyTypeError {
+    #[error("Provided incompatible denendency types")]
+    IncompatibleCargoTypes,
+    #[error("Provided invalid stringify dependency type: {0}")]
+    InvalidType(String),
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum DependencyFeaturesError {
+    #[error("Provided incompatible denendency features")]
+    IncompatibleFeatures,
+    #[error("Provided invalid features {0}")]
+    InvalidFeature(String),
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum DependencyTargetTypeError {
+    #[error("Provided incompatible denendency target: {0}")]
+    InvalidType(String),
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum DependencyNameError {
+    #[error("Provided invalid dependency name: {0}")]
+    InvalidName(String),
+    #[error("Provided invalid dependency version: {0}")]
+    InvalidVersion(#[from] DependencyVersionError),
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum DependencyVersionError {
+    #[error("Parse error: {0}")]
+    ParseError(#[from] std::num::ParseIntError),
+    #[error("Invalid parts: {0}")]
+    InvalidParts(u8),
+}
