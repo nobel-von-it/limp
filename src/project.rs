@@ -1,4 +1,18 @@
-use crate::error::{CompilerEditionError, ProjectTypeError};
+#[derive(thiserror::Error, Debug)]
+pub enum ProjectTypeError {
+    #[error("Provided bin and lib: cannot initialize project")]
+    BothSpecified,
+    #[error("Provided nothing: cannot initialize project")]
+    NeitherSpecified,
+    #[error("Provided invalid project type: {0}")]
+    InvalidType(String),
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum CompilerEditionError {
+    #[error("Provided imvalid compiler edition: {0}")]
+    InvalidEdition(String),
+}
 
 #[derive(Default, Debug, PartialEq, Eq)]
 pub enum CompilerEdition {

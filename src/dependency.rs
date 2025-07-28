@@ -1,7 +1,44 @@
-use crate::error::{
-    DependencyFeaturesError, DependencyNameError, DependencyTargetTypeError, DependencyTypeError,
-    DependencyVersionError,
-};
+use crate::utils::{ValidProvider, ValidStr, ValidStrError, Validator};
+
+#[derive(thiserror::Error, Debug)]
+pub enum DependencyTypeError {
+    #[error("Provided incompatible denendency types")]
+    IncompatibleCargoTypes,
+    #[error("Provided invalid stringify dependency type: {0}")]
+    InvalidType(String),
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum DependencyFeaturesError {
+    #[error("Provided incompatible denendency features")]
+    IncompatibleFeatures,
+    #[error("Provided invalid features {0}")]
+    InvalidFeature(String),
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum DependencyTargetTypeError {
+    #[error("Provided incompatible denendency target: {0}")]
+    InvalidType(String),
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum DependencyNameError {
+    #[error("Provided invalid dependency name: {0}")]
+    InvalidName(#[from] ValidStrError),
+    #[error("Provided invalid dependency version: {0}")]
+    InvalidVersion(#[from] DependencyVersionError),
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum DependencyVersionError {
+    #[error("Parse error: {0}")]
+    ParseError(#[from] std::num::ParseIntError),
+    #[error("Invalid parts: {0}")]
+    InvalidParts(u8),
+    #[error("Invalid numbers: {0}")]
+    InvalidNumbers(String),
+}
 
 #[derive(Default, Debug, PartialEq, Eq)]
 pub enum DependencyTargetType {
@@ -135,7 +172,7 @@ impl TryFrom<(bool, bool, Option<&String>)> for DependencyFeatures {
 // name or name@version
 #[derive(Debug, PartialEq, Eq)]
 pub struct DependencyName {
-    name: String,
+    name: ValidStr,
     version: DependencyVersion,
 }
 
@@ -176,6 +213,10 @@ impl TryFrom<&str> for DependencyName {
 }
 
 impl DependencyName {
+    fn parse_name(name: &str) -> Result<ValidStr, DependencyNameError> {
+        Ok(ValidStr::new(name)?)
+    }
+    fn parse_version(version: &str) -> Result<DependencyVersion, DependencyVersionError> {}
     pub fn new(name: &str) -> Self {
         Self {
             name: name.to_string(),
@@ -200,6 +241,35 @@ pub enum DependencyVersion {
         minor: u32,
     },
 }
+
+impl Validator for DependencyVersion {
+    type Error = DependencyVersionError;
+    fn check(&self) -> Result<(), Self::Error> {
+        match self {
+            DependencyVersion::Latest => Ok(()),
+            DependencyVersion::Custom {
+                release,
+                major,
+                minor,
+            } => {
+                if *release == 0 || *major == 0 || *minor == 0 {
+                    Err(DependencyVersionError::InvalidNumbers(format!(
+                        "release: {}, major: {}, minor: {}",
+                        release, major, minor
+                    )))
+                } else {
+                    Ok(())
+                }
+            }
+        }
+    }
+}
+impl<S: AsRef<str>> ValidProvider<S> for DependencyVersion {
+    fn new(value: S) -> Result<Self, Self::Error> {
+        let vs = ValidStr::from(value);
+        vs.check()?;
+    }
+} // ValidProvider
 
 impl TryFrom<&str> for DependencyVersion {
     type Error = DependencyVersionError;

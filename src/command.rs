@@ -6,6 +6,7 @@ use crate::{
     arg::ArgManager,
     dependency::{DependencyFeatures, DependencyName, DependencyTargetType, DependencyType},
     project::{CompilerEdition, ProjectType},
+    utils::{ValidProvider, ValidStr},
 };
 
 pub trait ClapCommandProvider {
@@ -127,7 +128,7 @@ impl StorageConfig {
 
 #[derive(Debug)]
 pub struct InitCommand {
-    name: String,
+    name: ValidStr,
 
     project_type: ProjectType,
     edition: CompilerEdition,
@@ -160,16 +161,18 @@ impl ClapCommandParser for InitCommand {
     fn from_matches(args: &ArgMatches) -> Option<Self> {
         // String and &str -> ok
         // &String and &str -> bruh
-        let name = args
-            .get_one::<String>("name")
-            .unwrap_or(
-                &std::env::current_dir()
-                    .unwrap()
-                    .file_name()?
-                    .to_str()?
-                    .to_string(),
-            )
-            .clone();
+        let name = ValidStr::new(
+            args.get_one::<String>("name")
+                .unwrap_or(
+                    &std::env::current_dir()
+                        .unwrap()
+                        .file_name()?
+                        .to_str()?
+                        .to_string(),
+                )
+                .clone(),
+        )
+        .ok()?;
 
         let project_type = ProjectType::try_from((
             *args.get_one("lib")?,
@@ -195,7 +198,7 @@ impl ClapCommandParser for InitCommand {
 
 #[derive(Debug)]
 pub struct NewCommand {
-    name: String,
+    name: ValidStr,
 
     project_type: ProjectType,
     edition: CompilerEdition,
@@ -226,16 +229,18 @@ impl ClapCommandProvider for NewCommand {
 }
 impl ClapCommandParser for NewCommand {
     fn from_matches(args: &ArgMatches) -> Option<Self> {
-        let name = args
-            .get_one::<String>("name")
-            .unwrap_or(
-                &std::env::current_dir()
-                    .unwrap()
-                    .file_name()?
-                    .to_str()?
-                    .to_string(),
-            )
-            .clone();
+        let name = ValidStr::new(
+            args.get_one::<String>("name")
+                .unwrap_or(
+                    &std::env::current_dir()
+                        .unwrap()
+                        .file_name()?
+                        .to_str()?
+                        .to_string(),
+                )
+                .clone(),
+        )
+        .ok()?;
 
         let project_type = ProjectType::try_from((
             *args.get_one("lib")?,
@@ -380,18 +385,18 @@ mod test {
     fn get_main_application(args: &[&str]) -> Option<MainApplication> {
         let am = &ArgManager;
         let args = MainApplication::command(am).get_matches_from(args);
-        let app = MainApplication::from_matches(&args);
-        app
+        MainApplication::from_matches(&args)
     }
     mod init_command {
         use crate::{
             command::{test::get_main_application, InitCommand, LimpCommand},
             project::{CompilerEdition, ProjectType},
+            utils::{ValidProvider, ValidStr},
         };
 
         fn initialize_init_parse_helper_some(
             args: &[&str],
-            sname: &str,
+            sname: ValidStr,
             sproject_type: ProjectType,
             sedition: CompilerEdition,
         ) {
@@ -421,7 +426,7 @@ mod test {
         fn initialize_init_parse_without_values_test() {
             initialize_init_parse_helper_some(
                 &["limp", "init"],
-                "limp",
+                ValidStr::new("limp".to_string()).unwrap(),
                 ProjectType::Bin,
                 CompilerEdition::E2024,
             );
@@ -432,7 +437,7 @@ mod test {
             let name = "blubli";
             initialize_init_parse_helper_some(
                 &["limp", "init", name],
-                name,
+                ValidStr::new(name.to_string()).unwrap(),
                 ProjectType::Bin,
                 CompilerEdition::E2024,
             );
@@ -443,7 +448,7 @@ mod test {
             let name = "blubli2";
             initialize_init_parse_helper_some(
                 &["limp", "init", "-l", "-e", "15", name],
-                name,
+                ValidStr::new(name.to_string()).unwrap(),
                 ProjectType::Lib,
                 CompilerEdition::E2015,
             );
@@ -471,11 +476,12 @@ mod test {
         use crate::{
             command::{test::get_main_application, LimpCommand, NewCommand},
             project::{CompilerEdition, ProjectType},
+            utils::ValidStr,
         };
 
         fn initialize_new_parse_helper_some(
             args: &[&str],
-            sname: &str,
+            sname: ValidStr,
             sproject_type: ProjectType,
             sedition: CompilerEdition,
         ) {
@@ -505,7 +511,7 @@ mod test {
             let name = "blubli";
             initialize_new_parse_helper_some(
                 &["limp", "new", name],
-                name,
+                ValidStr::from(name),
                 ProjectType::Bin,
                 CompilerEdition::E2024,
             );
@@ -516,7 +522,7 @@ mod test {
             let name = "blubli_new";
             initialize_new_parse_helper_some(
                 &["limp", "new", "-l", "-e", "21", name],
-                name,
+                ValidStr::from(name),
                 ProjectType::Lib,
                 CompilerEdition::E2021,
             );
